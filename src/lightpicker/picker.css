@@ -1,0 +1,32 @@
+/* The light chooser (LightPicker.swift): dark glass, three small screens a row, two rows in sight, the rest scrolls. */
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body {
+  background: radial-gradient(120% 90% at 50% 0%, #1d1d23 0%, #121216 70%);
+  color: rgba(255, 255, 255, 0.92);
+  font: 14px "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  user-select: none;
+}
+header { display: flex; align-items: center; height: 70px; padding: 0 22px 0 30px; -webkit-app-region: drag; }
+h1 { margin: 0; flex: 1; font-size: 22px; font-weight: 600; letter-spacing: 0.01em; }
+#close { -webkit-app-region: no-drag; width: 30px; height: 30px; border: 0; border-radius: 8px; background: transparent; cursor: pointer; }
+#close:hover { background: rgba(255, 255, 255, 0.08); }
+#close svg { width: 12px; height: 12px; stroke: rgba(255, 255, 255, 0.7); stroke-width: 1.4; stroke-linecap: round; }
+main {
+  height: calc(100% - 70px); overflow-y: auto; padding: 0 30px 30px;
+  display: grid; grid-template-columns: repeat(3, 220px); gap: 18px 18px; align-content: start; justify-content: center;
+}
+main::-webkit-scrollbar { width: 8px; }
+main::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.14); border-radius: 4px; }
+.tile { cursor: pointer; }
+.tile canvas {
+  display: block; width: 220px; height: 124px; border-radius: 12px; background: #0d0d0d;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); transition: box-shadow 0.2s ease;
+}
+.tile.chosen canvas { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9); }
+.tile .name { display: flex; align-items: center; margin-top: 9px; color: rgba(255, 255, 255, 0.6); font-weight: 500; }
+.tile.chosen .name { color: rgba(255, 255, 255, 0.95); }
+.tile .name span { flex: 1; }
+.tile .name svg { width: 16px; height: 16px; opacity: 0; transition: opacity 0.2s ease; }
+.tile.chosen .name svg { opacity: 1; }

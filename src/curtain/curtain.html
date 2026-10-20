@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>iBaila</title>
+<style>
+  /* The desk cleared (ClearDesk.swift): the wallpaper laid over every window like a curtain, iBaila's own windows over
+     it; and the live wallpaper's clip over that, once the curtain has closed. Every fade is the compositor's. */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: transparent; cursor: default; }
+  #curtain { position: absolute; inset: 0; opacity: 0; background: #000; transition: opacity 0.7s ease-in-out; }
+  #curtain.shown { opacity: 1; }
+  #curtain img, #curtain video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  #curtain video { opacity: 0; transition: opacity 0.45s ease-in-out; }
+  #curtain video.shown { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="curtain"><img id="picture" alt=""><video id="clip" muted loop playsinline></video></div>
+<script>
+  // Told { picture, clip } and to close or open: closing, the curtain comes in, then the clip over it; opening, the
+  // clip goes back to the curtain, then the curtain goes — and says so, for its window to go too.
+  const api = window.ibaila;
+  const curtain = document.getElementById('curtain');
+  const picture = document.getElementById('picture');
+  const clip = document.getElementById('clip');
+  const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+  let turn = 0;
+  api.listen('curtain-close', async ({ picture: url, clip: video }) => {
+    const mine = ++turn;
+    if (url) { picture.src = url; await picture.decode().catch(() => {}); }
+    if (mine !== turn) return;
+    curtain.classList.add('shown');
+    if (!video) return;
+    clip.src = video;
+    await wait(700);
+    if (mine !== turn) return;
+    await clip.play().catch(() => {});
+    clip.classList.add('shown');
+  });
+  api.listen('curtain-open', async () => {
+    const mine = ++turn;
+    if (clip.classList.contains('shown')) { clip.classList.remove('shown'); await wait(450); }
+    if (mine !== turn) return;
+    curtain.classList.remove('shown');
+    await wait(700);
+    if (mine !== turn) return;
+    clip.pause();
+    clip.removeAttribute('src');
+    api.send('curtain-opened');
+  });
+</script>
+</body>
+</html>

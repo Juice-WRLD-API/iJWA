@@ -1,0 +1,7 @@
+whisper.cpp commit 0c7be696371069e0baa2515ed7aa08d5a5473aa6 (ggml 0.26.0)
+target: x86_64-windows-gnu, cross-built on macOS with zig 0.17.0 (clang + lld, static libc++/libunwind, UCRT via api-ms-win-crt-*)
+cmake: -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DGGML_BACKEND_DL=ON -DGGML_CPU_ALL_VARIANTS=ON -DGGML_NATIVE=OFF -DGGML_OPENMP=OFF -DGGML_VULKAN=ON
+baseline CPU: x86-64 (exe, libwhisper, ggml, ggml-base, ggml-vulkan); CPU kernels picked at runtime from ggml-cpu-*.dll (x64 ... sapphirerapids)
+vulkan: Vulkan-Headers 1.4.363, SPIRV-Headers 1.4.363, glslc from shaderc 2026.4; vulkan-1.dll imported only by ggml-vulkan.dll (loaded at runtime, skipped if missing)
+link: CRT symbols kept out of MinGW auto-export via a .drectve -exclude-symbols object (zig names CRT objects so lld doesn't recognise them)
+built: 2026-10-12T18:12Z

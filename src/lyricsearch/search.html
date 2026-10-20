@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Which song is this?</title>
+  <link rel="stylesheet" href="search.css">
+</head>
+<body>
+  <header>
+    <div class="titles"><h1>Which song is this?</h1><p>Pick the right one so the words line up with it.</p></div>
+    <button id="close" aria-label="Close"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
+  </header>
+  <label id="field">
+    <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.6"/><path d="M10.4 10.4L14 14"/></svg>
+    <input id="asked" type="text" placeholder="Song and artist" spellcheck="false" autocomplete="off">
+    <span id="busy" class="gone"></span>
+  </label>
+  <main id="list"><div class="spinner"></div></main>
+  <script type="module" src="search.js"></script>
+</body>
+</html>

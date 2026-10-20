@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>iBaila</title>
+<style>
+  /* One display's live wallpaper (WallpaperStage in LiveWallpaper.swift): the Windows wallpaper beneath, the user's
+     own video over it, and over that the song's clip; each picture with its Dim and a soft vignette. */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; cursor: default; }
+  #beneath { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .plane { position: absolute; inset: 0; opacity: 0; overflow: hidden; }
+  .plane .canvas { position: absolute; inset: 0; }
+  .plane video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
+  .plane .shade { position: absolute; inset: 0; background: #000; opacity: 0.4; transition: opacity 0.2s ease-out; }
+  .plane .vignette { position: absolute; inset: 0; background: radial-gradient(ellipse 85% 85% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.35) 100%); }
+</style>
+</head>
+<body>
+<img id="beneath" alt="">
+<div class="plane" id="base"><div class="canvas"></div><div class="shade"></div><div class="vignette"></div></div>
+<div class="plane" id="top"><div class="canvas"></div><div class="shade"></div><div class="vignette"></div></div>
+<script type="module" src="wallpaper.js"></script>
+</body>
+</html>

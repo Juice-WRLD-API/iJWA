@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>iBaila</title>
+<link rel="stylesheet" href="artist.css">
+</head>
+<body>
+<div id="page">
+  <div id="wash"></div>
+  <div id="content">
+    <div id="header">
+      <div id="photo"><img alt="" draggable="false"></div>
+      <h1 id="name"></h1>
+      <p id="bio"></p>
+      <div id="buttons">
+        <button class="pill filled" data-action="play"><span class="glyph play"></span>Play</button>
+        <button class="pill" data-action="shuffle"><span class="glyph shuffle"></span>Shuffle</button>
+      </div>
+    </div>
+    <div id="music">
+      <h2>Top Songs</h2>
+      <div id="list"><div id="rows"></div></div>
+    </div>
+  </div>
+  <button id="close" aria-label="Close"></button>
+</div>
+<script type="module" src="artist.js"></script>
+</body>
+</html>

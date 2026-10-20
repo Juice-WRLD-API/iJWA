@@ -1,0 +1,13 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>iBaila</title></head>
+<body>
+<script type="module">
+  // The page iBaila's windows are opened from, so they share its process (windows.js). It draws the icon by the clock
+  // too, for the app to set.
+  import { trayIcon } from '../light/trayicon.js';
+  window.__trayIcon = trayIcon;
+  // Every page opened from here shares this process and its heaps: once a minute, at a quiet moment, what they no
+  // longer use is collected, rather than piling up between the collections that come by themselves (2026-10-10).
+  if (typeof gc === 'function') setInterval(() => requestIdleCallback(() => gc(), { timeout: 10000 }), 60000);
+</script>
+</body></html>

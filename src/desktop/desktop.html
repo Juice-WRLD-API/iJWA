@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>iBaila</title>
+<link rel="stylesheet" href="desktop.css">
+</head>
+<body>
+<div id="player">
+  <div id="carousel">
+    <div id="aura"></div>
+    <div id="stage"></div>
+    <div id="empty">Play a song, and its artist's albums show up here</div>
+    <div id="refusal"></div>
+    <div id="album" class="hidden"><div class="album-head"><div class="album-words"><div class="album-title"></div><div class="album-sub"></div></div>
+      <button class="album-close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="album-rule"></div><div class="album-rows"></div></div>
+    <div id="starting" class="hidden"><div class="start-glass"></div><div class="start-cover"><div class="orbit"></div></div>
+      <div class="start-title"></div><div class="start-artist"></div>
+      <div class="start-pill"><span class="pill-logo"></span><span class="pill-text"></span><span class="start-bars"><i></i><i></i><i></i></span></div></div>
+    <div id="ext-card" class="hidden"><div class="ext-glass"></div><div class="ext-icon"></div><div class="ext-title"></div><div class="ext-words"></div>
+      <button class="ext-add"></button><div class="ext-note">Works in Chrome, Edge, Brave, Opera and Vivaldi.</div>
+      <div class="ext-wait"><span class="start-bars"><i></i><i></i><i></i></span><span class="ext-wait-text"></span></div>
+      <button class="ext-again">Show me again</button></div>
+  </div>
+  <div id="search-grid" class="hidden"></div>
+  <div id="lists" class="hidden"></div>
+  <div id="lyrics" class="hidden"><div class="stage"></div><div class="quiet"><div class="quiet-icon"></div><div class="quiet-text"></div><button class="lyrics-search gone" id="search-lyrics"></button></div></div>
+  <button class="lyrics-search quiet-search gone" id="other-lyrics"></button>
+  <div id="tools">
+    <button class="circle quiet gone" data-tool="lyricsCard" aria-label="Hide the album" title="Hide the album"></button>
+    <div id="notice-slot"></div>
+    <button class="circle" data-tool="settings" aria-label="Settings" title="Settings"></button>
+    <div id="searchbar" class="circle"></div>
+    <button class="circle" data-tool="wallpaper" aria-label="Live wallpaper"></button>
+    <button class="circle" data-tool="mini" aria-label="Make the player small"></button>
+  </div>
+  <div id="bar"></div>
+  <div id="mini" class="hidden"></div>
+</div>
+<script type="module" src="desktop.js"></script>
+</body>
+</html>

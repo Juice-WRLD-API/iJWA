@@ -1,0 +1,139 @@
+/* The settings, rising from the tray as Windows' own panels do (SettingsPanel.swift's look: dark glass, groups that
+   open one at a time, blocks with their own switch). The accent is the one chosen in Windows. */
+:root { color-scheme: dark; --accent: #4cc2ff; --accent-ink: #001a28; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; user-select: none; -webkit-user-select: none;
+  font: 14px/1.35 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; color: rgba(255, 255, 255, 0.94); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; border: none; background: none; cursor: default; outline: none; }
+
+#panel { position: absolute; inset: 8px; border-radius: 14px; overflow: hidden; background: rgba(30, 30, 32, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.09); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.4);
+  animation: rise 0.22s cubic-bezier(0.2, 0.9, 0.3, 1); }
+@keyframes rise { from { transform: translateY(18px); opacity: 0; } }
+#panel.leaving { animation: sink 0.14s ease-in forwards; }
+@keyframes sink { to { transform: translateY(14px); opacity: 0; } }
+#scroll { position: absolute; inset: 0; overflow-y: auto; padding: 20px 20px 22px; scrollbar-width: thin; }
+#scroll::-webkit-scrollbar { width: 6px; }
+#scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 3px; }
+
+header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+header h1 { flex: 1; }
+header .close { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.07); transition: background 0.15s, color 0.15s; }
+header .close:hover { background: rgba(255, 255, 255, 0.14); color: #fff; }
+header .close svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+hr { border: none; height: 1px; background: rgba(255, 255, 255, 0.08); margin: 14px 0 6px; }
+.grow { flex: 1; min-width: 0; }
+.line { display: flex; align-items: center; gap: 10px; min-height: 30px; }
+.glyph { width: 18px; height: 18px; color: rgba(255, 255, 255, 0.55); flex: none; }
+.glyph svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.glyph text { fill: currentColor; stroke: none; font: 600 7.5px "Segoe UI"; }
+.note { font-size: 12px; color: rgba(255, 255, 255, 0.55); line-height: 1.4; }
+.hidden { display: none !important; }
+
+.callout { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-top: 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); }
+
+/* A switch. */
+.switch { position: relative; width: 40px; height: 20px; flex: none; }
+.switch.big { width: 44px; height: 22px; }
+.switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; z-index: 1; }
+.switch i { position: absolute; inset: 0; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.55); background: rgba(255, 255, 255, 0.04);
+  transition: background 0.15s, border-color 0.15s; }
+.switch i::after { content: ''; position: absolute; width: 12px; height: 12px; left: 3px; top: 3px; border-radius: 50%; background: rgba(255, 255, 255, 0.8);
+  transition: transform 0.18s cubic-bezier(0.3, 1.4, 0.5, 1), width 0.1s, background 0.15s; }
+.switch.big i::after { width: 14px; height: 14px; }
+.switch input:checked + i { background: var(--accent); border-color: var(--accent); }
+.switch input:checked + i::after { transform: translateX(20px); background: var(--accent-ink); }
+.switch.big input:checked + i::after { transform: translateX(22px); }
+.switch input:active + i::after { width: 15px; }
+
+/* Buttons. */
+.button { padding: 5px 12px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.07); font-size: 13px; white-space: nowrap; }
+.button:hover { background: rgba(255, 255, 255, 0.12); }
+.button:active { background: rgba(255, 255, 255, 0.06); }
+.button:disabled { opacity: 0.4; }
+.prominent { padding: 5px 14px; border-radius: 6px; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 13px; }
+
+/* A group: a header that opens it, its settings beneath. */
+.group { padding: 3px 0; }
+.group > .head { display: flex; align-items: center; gap: 10px; width: 100%; padding: 5px 0; text-align: left; }
+.group > .head .icon { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.6); transition: background 0.2s, color 0.2s; }
+.group > .head .icon svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.group > .head .title { flex: 1; font-weight: 500; }
+.group > .head .chevron { width: 12px; height: 12px; color: rgba(255, 255, 255, 0.5); transition: transform 0.25s ease; }
+.group > .head .chevron svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.group.open > .head .icon { background: rgba(255, 255, 255, 0.1); color: var(--accent); }
+.group.open > .head .chevron { transform: rotate(90deg); }
+.group > .body { display: none; flex-direction: column; gap: 16px; padding: 14px 0 8px; }
+.group.open > .body { display: flex; animation: open 0.25s ease; }
+@keyframes open { from { opacity: 0; transform: translateY(-6px); } }
+
+/* A block with its own switch. */
+.block { display: flex; flex-direction: column; gap: 14px; padding: 14px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08); }
+.block > .top { display: flex; align-items: center; justify-content: space-between; }
+.label { font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, 0.6); }
+.block > .inside { display: flex; flex-direction: column; gap: 14px; }
+.block.off > .inside { display: none; }
+.block.off.keeps > .inside { display: flex; }
+
+/* A slider. */
+.slider { display: flex; flex-direction: column; gap: 8px; }
+.slider .name { font-size: 13px; }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 20px; background: transparent; }
+input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 2px;
+  background: linear-gradient(to right, var(--accent) 0, var(--accent) var(--fill, 50%), rgba(255, 255, 255, 0.22) var(--fill, 50%)); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; margin-top: -8px; border-radius: 50%;
+  background: #454548; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: inset 0 0 0 5px #454548, inset 0 0 0 10px var(--accent); transition: box-shadow 0.12s; }
+input[type=range]:hover::-webkit-slider-thumb { box-shadow: inset 0 0 0 4px #454548, inset 0 0 0 10px var(--accent); }
+input[type=range]:active::-webkit-slider-thumb { box-shadow: inset 0 0 0 6px #454548, inset 0 0 0 10px var(--accent); }
+
+/* A choice of a few: segments. */
+.picker { display: flex; align-items: center; gap: 10px; }
+.segments { display: inline-flex; padding: 2px; border-radius: 7px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.06); }
+.segments button { padding: 3px 11px; border-radius: 5px; font-size: 13px; color: rgba(255, 255, 255, 0.75); }
+.segments button:hover { color: #fff; }
+.segments button.on { background: rgba(255, 255, 255, 0.14); color: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); }
+
+/* The music box: how the light listens, with a meter that jumps with every beat. */
+.music { display: flex; flex-direction: column; gap: 14px; padding: 14px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08); }
+.meter { display: flex; gap: 2px; align-items: center; }
+.meter i { width: 3px; height: 12px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); }
+
+/* Color wheels. */
+.wheels { display: flex; justify-content: space-around; }
+.wheel { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.wheel.dimmed { opacity: 0.3; pointer-events: none; }
+.wheel .disc { position: relative; width: 124px; height: 124px; border-radius: 50%; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35); touch-action: none; }
+.wheel canvas { width: 124px; height: 124px; border-radius: 50%; display: block; }
+.wheel .knob { position: absolute; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); pointer-events: none; }
+.wheel .bright { display: flex; align-items: center; gap: 6px; width: 132px; color: rgba(255, 255, 255, 0.5); font-size: 10px; }
+
+/* The lyrics' faces. */
+.fonts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.fonts button { height: 44px; padding: 0 10px; border-radius: 8px; text-align: left; background: rgba(255, 255, 255, 0.05); border: 1.5px solid transparent;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 17px; }
+.fonts button:hover { background: rgba(255, 255, 255, 0.09); }
+.fonts button.on { border-color: var(--accent); background: rgba(255, 255, 255, 0.08); }
+
+/* Displays. */
+.display { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border-radius: 10px; width: 100%;
+  background: rgba(255, 255, 255, 0.04); border: 1.5px solid rgba(255, 255, 255, 0.1); }
+.display.on { background: color-mix(in srgb, var(--accent) 12%, transparent); border-color: color-mix(in srgb, var(--accent) 80%, transparent); }
+.display svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.display .mark { color: var(--accent); }
+.display:not(.on) .mark { display: none; }
+.display:not(.on) > svg:first-child { color: rgba(255, 255, 255, 0.5); }
+.display.on > svg:first-child { color: var(--accent); }
+
+/* The user's video. */
+.video { display: flex; align-items: center; gap: 10px; }
+.video .thumb { width: 64px; height: 36px; border-radius: 6px; background: rgba(255, 255, 255, 0.08); flex: none; overflow: hidden; display: grid; place-items: center; color: rgba(255, 255, 255, 0.5); }
+.video .thumb video { width: 100%; height: 100%; object-fit: cover; }
+.video .name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.video .name.none { color: rgba(255, 255, 255, 0.5); }
+.storage { display: flex; align-items: center; gap: 10px; }
+.storage .size { font-size: 12px; color: rgba(255, 255, 255, 0.55); font-variant-numeric: tabular-nums; }
+.foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.version { font-size: 12px; color: rgba(255, 255, 255, 0.5); }
+.video .thumb svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }

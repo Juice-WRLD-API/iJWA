@@ -1,0 +1,12 @@
+{
+  "name": "ibaila-windows",
+  "productName": "iBaila",
+  "version": "1.9.1",
+  "description": "iBaila for Windows: light around your screen that moves with the music",
+  "main": "src/main/main.js",
+  "private": true,
+  "author": "YoMilly",
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  }
+}

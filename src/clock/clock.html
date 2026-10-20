@@ -1,0 +1,132 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>iBaila</title>
+<style>
+  /* The clock on the desktop (DesktopClock.swift): the date, and beneath it the time in tall digits of glass, tinted
+     with the playing song's artwork. Windows has no Lock Screen digits to borrow: Bahnschrift, its own narrow
+     face, is stretched upward the way the Mac's stand-in is. */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; user-select: none; -webkit-user-select: none; cursor: default; }
+  #clock { position: absolute; left: 24px; top: 24px; display: flex; flex-direction: column; align-items: center; }
+  #date { font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; font-weight: 500; letter-spacing: 0.3px; white-space: nowrap;
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.2)); background-clip: text; -webkit-background-clip: text; color: transparent; transition: background-image 1.2s; }
+  svg { display: block; overflow: visible; filter: drop-shadow(0 5px 12px rgba(0, 0, 0, 0.22)); }
+  text { font-family: Bahnschrift, "DIN Condensed", "SF Compact Display", "Arial Narrow", sans-serif; }
+  stop { transition: stop-color 1.2s, stop-opacity 1.2s; }
+</style>
+</head>
+<body>
+<div id="clock">
+  <div id="date"></div>
+  <svg id="digits">
+    <defs>
+      <linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop id="b0" offset="0"/><stop id="b1" offset="1"/></linearGradient>
+      <!-- A sheen on the glass from above, as on the Lock Screen's digits: at their tops only. -->
+      <linearGradient id="light" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#fff" stop-opacity="0.22"/><stop offset="0.22" stop-color="#fff" stop-opacity="0.05"/><stop offset="0.4" stop-color="#fff" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#fff" stop-opacity="0.8"/><stop offset="0.45" stop-color="#fff" stop-opacity="0.15"/><stop offset="1" stop-color="#fff" stop-opacity="0.45"/>
+      </linearGradient>
+    </defs>
+    <text id="time" x="0" y="0" fill="url(#body)" stroke="url(#rim)" stroke-width="1.2" vector-effect="non-scaling-stroke"></text>
+    <use href="#time" fill="url(#light)" stroke="none"/>
+  </svg>
+</div>
+<script type="module">
+import { paletteFromPixels, hsbToRgb } from '../light/engine.js';
+const api = window.ibaila;
+const $ = (s) => document.querySelector(s);
+let style = null, now = { playing: false, artwork: null }, colors = null, colorsFor = null;
+
+/** "Thu Oct 8", as on the Lock Screen. */
+const day = (date) => date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).replace(',', '');
+/** "10:19": no seconds, and in 12-hour regions no AM or PM. */
+function time(date) {
+  const twelve = new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hour12;
+  const h = date.getHours(), m = String(date.getMinutes()).padStart(2, '0');
+  return twelve ? `${h % 12 || 12}:${m}` : `${String(h).padStart(2, '0')}:${m}`;
+}
+
+/** The artwork's two colors while a song plays and the user wants them; milky white glass otherwise. */
+function tones() {
+  if (!style.useArtworkColor || !now.playing || !colors) return [[1, 1, 1], [1, 1, 1]];
+  return [colors.primary, colors.secondary].map(hsbToRgb);
+}
+
+function draw() {
+  if (!style) return;
+  const fontSize = (60 + 150 * style.size) * (style.fit || 1);
+  const stretch = (100 + 400 * style.stretch) / 100 / 1.45;   // the Lock Screen's digits grow about this much taller
+  const weight = Math.round(250 + 600 * style.weight);
+  const date = new Date();
+  const text = $('#time');
+  text.textContent = time(date);
+  Object.assign(text.style, { fontSize: `${fontSize}px`, fontWeight: String(weight), fontStretch: 'condensed', fontVariationSettings: `'wght' ${weight}, 'wdth' 75` });
+  // Every digit stands as tall as the figures: their ink, measured once per look, keeps the clock the same size
+  // whatever the time ("00:00" for the width).
+  const family = getComputedStyle(text).fontFamily;
+  const pen = document.createElement('canvas').getContext('2d');
+  pen.font = `${weight} condensed ${fontSize}px ${family}`;
+  const figures = pen.measureText('0123456789');
+  const ascent = figures.actualBoundingBoxAscent;
+  const wide = pen.measureText('00:00').width;
+  const width = pen.measureText(text.textContent).width;
+  text.setAttribute('transform', `scale(1, ${stretch}) translate(${(wide - width) / 2}, ${ascent})`);
+  const svg = $('#digits');
+  svg.setAttribute('width', String(Math.ceil(wide)));
+  svg.setAttribute('height', String(Math.ceil(ascent * stretch)));
+  const dateSize = Math.max(fontSize * 0.13, 11);
+  const gap = fontSize * 0.08;
+  const label = $('#date');
+  label.style.display = style.showDate ? '' : 'none';
+  label.style.fontSize = `${dateSize}px`;
+  label.style.marginBottom = `${gap}px`;
+  label.textContent = day(date);
+  const [first, second] = tones();
+  const css = (rgb, a) => `rgba(${rgb.map((v) => Math.round(v * 255)).join(', ')}, ${a})`;
+  const white = first.every((v) => v === 1) && second.every((v) => v === 1);
+  label.style.backgroundImage = white ? 'linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8))' : `linear-gradient(90deg, ${css(first, 1)}, ${css(second, 1)})`;
+  // Glass: the color fuller at the top-left, fading toward the bottom-right, where the glass is nearly clear.
+  $('#b0').setAttribute('stop-color', css(first, 1)); $('#b0').setAttribute('stop-opacity', String(0.2 + 0.34 * style.tint));
+  $('#b1').setAttribute('stop-color', css(second, 1)); $('#b1').setAttribute('stop-opacity', String(0.03 + 0.18 * style.tint));
+  const clock = $('#clock').getBoundingClientRect();
+  api.send('clock-size', { width: Math.ceil(Math.max(wide, dateSize * 6) + 48), height: Math.ceil(clock.height + 48) });
+}
+
+function readColors(url) {
+  if (url === colorsFor) return;
+  colorsFor = url;
+  if (!url) { colors = null; draw(); return; }
+  const image = new Image();
+  image.onload = () => {
+    if (colorsFor !== url) return;
+    const c = document.createElement('canvas'); c.width = 32; c.height = 32;
+    const g = c.getContext('2d', { willReadFrequently: true });
+    g.drawImage(image, 0, 0, 32, 32);
+    colors = paletteFromPixels(g.getImageData(0, 0, 32, 32).data);
+    draw();
+  };
+  image.src = url;
+}
+
+// It changes once a minute and costs nothing in between.
+function everyMinute() { draw(); setTimeout(everyMinute, 60000 - (Date.now() % 60000) + 50); }
+
+// The clock has nothing to press: anywhere on it drags it.
+let press = null;
+document.addEventListener('pointerdown', (e) => { if (e.button === 0) { press = { x: e.screenX, y: e.screenY, dragging: false }; document.body.setPointerCapture(e.pointerId); } });
+document.addEventListener('pointermove', (e) => { if (press && !press.dragging && Math.hypot(e.screenX - press.x, e.screenY - press.y) > 4) { press.dragging = true; api.send('clock-drag', 'start'); } });
+const end = () => { if (press?.dragging) api.send('clock-drag', 'end'); press = null; };
+document.addEventListener('pointerup', end);
+document.addEventListener('pointercancel', end);
+window.addEventListener('blur', end);
+
+api.onNow((next) => { const changed = next.playing !== now.playing; now = next; readColors(next.artwork); if (changed) draw(); });
+api.onClockStyle((next) => { style = next; draw(); });
+api.invoke('clock-hello').then((hello) => { style = hello.style; now = hello.now; readColors(now.artwork); document.fonts.ready.then(everyMinute); });
+</script>
+</body>
+</html>

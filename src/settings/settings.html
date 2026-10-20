@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>iBaila</title>
+<link rel="stylesheet" href="settings.css">
+</head>
+<body>
+<div id="panel">
+  <div id="scroll">
+    <header>
+      <h1>iBaila</h1>
+      <label class="switch big"><input type="checkbox" data-key="isEnabled"><i></i></label>
+      <button class="close" data-action="close" title="Close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></button>
+    </header>
+    <div class="line">
+      <span class="glyph">
+        <svg viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4.5v4.6h-4.6"/><text x="12" y="15.2" text-anchor="middle">15</text></svg>
+      </span>
+      <span class="grow">Start songs at 0:15</span>
+      <label class="switch"><input type="checkbox" data-key="general.startLater"><i></i></label>
+    </div>
+    <div id="hidden-player" class="callout hidden">
+      <span class="grow">Desktop Player is hidden</span>
+      <button class="prominent" data-action="show-player">Show</button>
+    </div>
+    <hr>
+    <div id="groups"></div>
+  </div>
+</div>
+<script type="module" src="settings.js"></script>
+</body>
+</html>

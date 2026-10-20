@@ -1,0 +1,121 @@
+/* The playlist panel. Every size is the design's size times --s (PlaylistMetrics). */
+:root { --s: 1; color-scheme: dark; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; user-select: none; -webkit-user-select: none;
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif; color: #fff; -webkit-font-smoothing: antialiased; }
+button { background: none; border: none; color: inherit; font: inherit; outline: none; cursor: default; }
+
+/* The panel's 3D space: it turns on its covers' edge, like a door on its hinge. */
+#stage { position: absolute; left: 24px; top: 24px; width: var(--width); height: var(--stage-height); transform-style: preserve-3d;
+  transform-origin: var(--hinge) 50%; transform: perspective(var(--depth)) rotateY(var(--angle)); }
+#catcher { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.01); }
+
+#header { position: absolute; left: 0; top: 0; width: var(--width); height: var(--header-height); display: flex; align-items: center;
+  gap: calc(12px * var(--s)); padding: 0 calc(4px * var(--s)); text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55); }
+#header.reserve { padding-right: calc(44px * var(--s)); }
+#header.reserve.both { padding-right: calc(80px * var(--s)); }
+.mosaic { width: calc(50px * var(--s)); height: calc(50px * var(--s)); flex: none; border-radius: calc(9px * var(--s)); overflow: hidden;
+  display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; background: rgb(51, 51, 51);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45); }
+.mosaic img, .mosaic span { width: 100%; height: 100%; object-fit: cover; display: block; background: rgb(51, 51, 51); }
+.names { min-width: 0; display: flex; flex-direction: column; gap: calc(3px * var(--s)); }
+.names .title { display: flex; align-items: center; gap: calc(6px * var(--s)); font-size: calc(17px * var(--s)); font-weight: 700; }
+.names .title span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.names .title svg { width: calc(11px * var(--s)); height: calc(11px * var(--s)); opacity: 0.7; flex: none; }
+.names .subtitle { font-size: calc(12.5px * var(--s)); font-weight: 500; color: rgba(255, 255, 255, 0.62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+#refresh { position: absolute; width: calc(30px * var(--s)); height: calc(30px * var(--s)); border-radius: 50%;
+  right: calc(4px * var(--s)); top: calc((var(--header-height) - 30px * var(--s)) / 2); display: grid; place-items: center;
+  background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16); opacity: 0; transition: background 0.15s, opacity 0.3s; color: rgba(255, 255, 255, 0.88); }
+#refresh.shown { opacity: 1; }
+#refresh:hover { background: rgba(255, 255, 255, 0.16); }
+#refresh svg { width: calc(14px * var(--s)); height: calc(14px * var(--s)); }
+#refresh.spinning svg { animation: spin 0.7s linear infinite; }
+#refresh.once svg { animation: spin 0.7s ease-in-out 1; }
+@keyframes spin { to { transform: rotate(-360deg); } }
+/* A playlist chosen: played from its first song (beside the refresh, when there is one). */
+#play-list { position: absolute; width: calc(30px * var(--s)); height: calc(30px * var(--s)); border-radius: 50%;
+  right: calc(4px * var(--s)); top: calc((var(--header-height) - 30px * var(--s)) / 2); display: grid; place-items: center;
+  background: rgba(255, 255, 255, 0.9); color: rgba(0, 0, 0, 0.85); opacity: 0; pointer-events: none;
+  transition: transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1), opacity 0.3s, background 0.15s; }
+#play-list.shown { opacity: 1; pointer-events: auto; }
+#play-list.beside { right: calc(40px * var(--s)); }
+#play-list:hover { transform: scale(1.08); background: #fff; }
+#play-list:active { transform: scale(0.94); }
+#play-list svg { width: calc(14px * var(--s)); height: calc(14px * var(--s)); }
+#play-list svg.play { margin-left: calc(1.5px * var(--s)); }
+#play-list svg.pause, #play-list.playing svg.play { display: none; }
+#play-list.playing svg.pause { display: block; }
+
+/* The list, the gap above it and a little more, for a raised face to stand into; the room either side too. */
+#clip { position: absolute; left: calc(var(--room) * -1); top: calc(var(--header-height) - 14px * var(--s)); width: calc(var(--width) + 2 * var(--room));
+  height: var(--clip-height); overflow: hidden; -webkit-mask-image: var(--fade); mask-image: var(--fade); }
+#list { position: absolute; left: var(--room); top: calc(var(--clip-height) - var(--list-height)); width: var(--width); height: 0;
+  transition: transform 0.22s ease-out; }
+#highlight { position: absolute; left: calc(var(--room) - 6px * var(--s)); width: calc(var(--width) + 12px * var(--s)); height: var(--row-height);
+  border-radius: calc(10px * var(--s)); background: rgba(255, 255, 255, 0.1); opacity: 0; transition: opacity 0.18s, transform 0.16s ease-out; }
+
+.row { position: absolute; left: 0; width: var(--width); height: var(--row-height); transition: opacity 0.45s; }
+.row .face { position: absolute; inset: 0; display: flex; align-items: center; gap: calc(12px * var(--s)); padding: 0 calc(4px * var(--s));
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); transition: opacity 0.25s; }
+.row.stepped { opacity: 0.5; }
+.cover { width: calc(38px * var(--s)); height: calc(38px * var(--s)); border-radius: calc(7px * var(--s)); flex: none; object-fit: cover; display: block;
+  background: linear-gradient(135deg, rgb(61, 61, 61), rgb(26, 26, 26)); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); }
+.texts { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: calc(2px * var(--s)); }
+.texts .t { font-size: calc(15px * var(--s)); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.texts .a { font-size: calc(12.5px * var(--s)); color: rgba(255, 255, 255, 0.62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.playing .texts { padding-right: calc(30px * var(--s)); }
+.playing .texts .t { font-weight: 700; background: var(--title-colors); -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
+
+/* A song on its way: a turning ring where its bars will dance, and a word of it breathing in place of its artist. */
+.spinner { position: absolute; right: calc(7px * var(--s)); top: 50%; width: calc(15px * var(--s)); height: calc(15px * var(--s));
+  margin-top: calc(-7.5px * var(--s)); border-radius: 50%; border: calc(2px * var(--s)) solid rgba(255, 255, 255, 0.16);
+  border-top-color: var(--spin, #fff); border-right-color: var(--spin, #fff); animation: turn 0.75s linear infinite; }
+@keyframes turn { to { transform: rotate(360deg); } }
+.playing .texts .a.starting { color: rgba(255, 255, 255, 0.9); animation: breathe 0.9s ease-in-out infinite alternate; }
+@keyframes breathe { from { opacity: 0.4; } to { opacity: 1; } }
+
+.bars { position: absolute; display: flex; gap: calc(2.2px * var(--s)); align-items: flex-end; height: calc(15px * var(--s));
+  right: calc(6px * var(--s)); top: calc((var(--row-height) - 15px * var(--s)) / 2); }
+.bars i { display: block; width: calc(2.6px * var(--s)); height: 100%; border-radius: 99px; transform-origin: 50% 100%; }
+.embers { position: absolute; inset: 0; pointer-events: none; }
+.embers i { position: absolute; left: 0; top: 0; border-radius: 50%; opacity: 0; }
+
+#track { position: absolute; left: calc(var(--width) + 6px * var(--s)); top: calc(var(--header-height) + var(--gap) + 6px * var(--s));
+  width: calc(2.5px * var(--s)); height: calc(var(--list-height) - 12px * var(--s)); border-radius: 99px; background: rgba(255, 255, 255, 0.06); }
+#track.hidden { display: none; }
+#thumb { position: absolute; left: 0; width: 100%; border-radius: 99px; background: #fff; opacity: 0.22; transition: transform 0.22s ease-out, opacity 1.3s; }
+#thumb.awake { opacity: 0.5; transition: transform 0.22s ease-out, opacity 0.1s; }
+
+/* The song playing, standing out of the list as a slab of glass. */
+#hero { position: absolute; width: calc(var(--width) + 20px * var(--s)); height: calc(var(--row-height) + 14px * var(--s));
+  left: calc(-10px * var(--s)); top: calc(var(--header-height) + var(--gap) - 7px * var(--s)); transform-style: preserve-3d; pointer-events: none; }
+#hero > div { position: absolute; inset: 0; border-radius: calc(14px * var(--s)); opacity: 0; }
+#hero .slices { transform-style: preserve-3d; }
+#hero .slices i { position: absolute; inset: 0; border-radius: calc(14px * var(--s)); border: calc(1.4px * var(--s)) solid rgba(255, 255, 255, 0.2); }
+#hero .back { background: rgba(255, 255, 255, 0.05); transform: translateZ(calc(-12px * var(--s))); }
+#hero .pane { overflow: hidden; background: rgba(255, 255, 255, 0.08); }
+#hero .pane .frost { position: absolute; inset: -20px; background-repeat: no-repeat; }
+#hero .pane .milk { position: absolute; inset: 0; background: rgba(255, 255, 255, 0.08); }
+/* Over the wallpaper's frost, the pane itself is clear and its film milkier. */
+#hero.frosted .pane { background: none; }
+#hero.frosted .pane .milk { background: rgba(255, 255, 255, 0.16); }
+#hero .face { inset: calc(7px * var(--s)) calc(10px * var(--s)); border-radius: 0; transform: translateZ(1px); }
+#hero .face .face-row { position: absolute; inset: 0; display: flex; align-items: center; gap: calc(12px * var(--s)); padding: 0 calc(4px * var(--s)); text-shadow: 0 1px 3px rgba(0,0,0,0.55); }
+#hero .sheen { background: linear-gradient(135deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 32%, rgba(255,255,255,0) 72%, rgba(255,255,255,0.06) 100%); transform: translateZ(1.5px); }
+#hero .inner { inset: calc(3px * var(--s)); border-radius: calc(11px * var(--s)); box-shadow: inset 0 0 0 calc(1px * var(--s)) rgba(255, 255, 255, 0.14); transform: translateZ(1.6px); }
+#hero .sweep { overflow: hidden; transform: translateZ(1.65px); }
+#hero .sweep i { position: absolute; inset: 0; opacity: 0; transition: opacity 0.35s; background-size: 260% 100%;
+  background-image: linear-gradient(100deg, transparent 0%, transparent 38%, rgba(255, 255, 255, 0.26) 50%, transparent 62%, transparent 100%);
+  animation: sweep 1.3s ease-in-out infinite paused; }
+/* The sweep runs only while a song starts: unseen, it worked out a style for every frame (memory measured, 2026-10-10). */
+#hero.starting .sweep i { opacity: 1; animation-play-state: running; }
+@keyframes sweep { from { background-position: 115% 0; } to { background-position: -15% 0; } }
+#hero .light, #hero .foot { padding: calc(1.8px * var(--s)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+#hero .light { background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.75) 20%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0) 75%, rgba(255,255,255,0.3) 100%); transform: translateZ(1.7px); }
+#hero .foot { padding: calc(2px * var(--s)); transform: translateZ(1.8px); }
+#hero .halo { inset: auto calc(14px * var(--s)) calc(-1px * var(--s)) calc(14px * var(--s)); height: calc(2px * var(--s)); border-radius: 99px; transform: translateZ(1.9px); }
+#floor { position: absolute; width: calc(var(--width) + 20px * var(--s)); height: calc(var(--row-height) + 14px * var(--s)); border-radius: calc(14px * var(--s));
+  left: calc(-2px * var(--s)); top: calc(var(--header-height) + var(--gap) + 5px * var(--s)); background: rgba(0, 0, 0, 0.5); filter: blur(calc(16px * var(--s)));
+  opacity: 0; transition: opacity 0.3s; pointer-events: none; }

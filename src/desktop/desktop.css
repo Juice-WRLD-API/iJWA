@@ -1,0 +1,544 @@
+/* The desktop player. Every size is the design's size times --s (DeskMetrics.swift). */
+:root { --s: 1; --glass: 0.6; color-scheme: dark; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; user-select: none; -webkit-user-select: none;
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif; color: #fff; -webkit-font-smoothing: antialiased; }
+button { background: none; border: none; color: inherit; font: inherit; cursor: default; outline: none; }
+
+#player { position: absolute; inset: 0; }
+
+/* ---- the cards ---- */
+/* The cards keep their depth among themselves: the bar, and the source menu rising from it, stand over them all. */
+#carousel { position: absolute; z-index: 1; left: 0; top: calc(40px * var(--s)); width: 100%; height: var(--carousel-height); }
+#stage { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+#aura { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+.aura-stage, .aura-glow, .aura-sparks { position: absolute; inset: 0; }
+.aura-breath, .aura-flare { position: absolute; }
+.aura-flare { opacity: 0; }
+.spark { position: absolute; left: 0; top: 0; border-radius: 50%; opacity: 0; will-change: transform, opacity; }
+
+.card { position: absolute; left: calc(var(--card-width) / -2); top: calc(var(--card-height) / -2); width: var(--card-width); height: var(--card-height);
+  transform-origin: 50% 50%; will-change: transform, opacity; }
+.card .veil, .card .floater, .card .leaner { position: absolute; inset: 0; transform-origin: 50% 50%; }
+/* The card beside the lyrics floats (CardLayer.float): a slow rise and fall of 4 points and nothing more, the compositor
+   moving the card's layer as it is — nothing painted again, nothing for the page to do (his call, 2026-10-10). */
+.card.floating .floater { will-change: transform; animation: card-float 3s ease-in-out 0.6s infinite alternate; }
+@keyframes card-float { from { transform: translateY(0); } to { transform: translateY(calc(-4px * var(--s))); } }
+
+.card .body { position: absolute; inset: 0; border-radius: var(--card-radius); overflow: hidden; background: rgb(36, 36, 40);
+  box-shadow: 0 calc(10px * var(--s)) calc(32px * var(--s)) rgba(0, 0, 0, 0.35); }
+.card .frost { position: absolute; inset: -30%; background-size: cover; background-position: center; filter: blur(calc(26px * var(--s))) saturate(1.25); transform: scale(1.1); }
+.card .frost.plain { background: rgb(36, 36, 40); filter: none; }
+.card .shade { position: absolute; inset: 0; background: #000; opacity: 0.25; }
+.card .tint { position: absolute; inset: 0; background: rgba(255, 255, 255, calc(0.02 + 0.12 * var(--glass))); }
+.card .face { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-top: var(--card-inset); }
+.card .cover { width: var(--cover-side); height: var(--cover-side); border-radius: var(--cover-radius); object-fit: cover; flex: none; display: block; }
+.card .cover.none { background: linear-gradient(135deg, rgb(61, 61, 61), rgb(26, 26, 26)); }
+.card .caption { width: 100%; height: var(--caption-height); display: flex; flex-direction: column; justify-content: center; align-items: center;
+  gap: calc(2px * var(--s)); padding: 0 calc(12px * var(--s)); text-align: center; }
+.card .title { font-size: calc(17px * var(--s)); font-weight: 600; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .line { font-size: calc(14.5px * var(--s)); color: rgba(255, 255, 255, 0.62); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .glare { position: absolute; inset: 0; opacity: 0; }
+.card .dim { position: absolute; inset: 0; background: #000; opacity: 0; }
+/* A rim of light brightest at the top-left. */
+.card .rim, .rimmed::after { position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, calc(0.35 + 0.5 * var(--glass))) 0%, rgba(255, 255, 255, calc(0.12 + 0.12 * var(--glass))) 45%, rgba(255, 255, 255, calc(0.2 + 0.25 * var(--glass))) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.card .rim { border-radius: var(--card-radius); }
+
+#empty { position: absolute; left: 50%; top: 50%; width: var(--card-width); height: var(--card-height); transform: translate(-50%, -50%);
+  border-radius: var(--card-radius); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(12px * var(--s));
+  color: rgba(255, 255, 255, 0.6); font-size: calc(14px * var(--s)); font-weight: 500; text-align: center; padding: 0 calc(20px * var(--s));
+  transition: opacity 0.3s ease-out; pointer-events: none; }
+#empty.gone { opacity: 0; }
+.glass-card { background: rgba(40, 40, 46, 0.45); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25); backdrop-filter: blur(20px); }
+
+#refusal { position: absolute; left: 50%; top: 50%; transform: translate(-50%, calc(var(--card-height) / 2 - var(--caption-height) - 26px * var(--s))) scale(0.85);
+  opacity: 0; transition: opacity 0.4s, transform 0.4s; pointer-events: none; display: flex; align-items: center; gap: calc(6px * var(--s));
+  font-size: calc(12px * var(--s)); font-weight: 600; padding: calc(6px * var(--s)) calc(11px * var(--s)); border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18); white-space: nowrap; }
+#refusal.shown { opacity: 1; transform: translate(-50%, calc(var(--card-height) / 2 - var(--caption-height) - 26px * var(--s))) scale(1); }
+#refusal svg { width: calc(13px * var(--s)); height: calc(13px * var(--s)); }
+
+/* ---- search, the live wallpaper's switch and the small player's, over the bar's right end ---- */
+#tools { position: absolute; left: 50%; transform: translateX(-50%); width: var(--bar-width); height: calc(42px * var(--s)); top: var(--tools-top);
+  display: flex; align-items: center; justify-content: flex-end; gap: calc(10px * var(--s)); transition: opacity 0.3s, top 0.6s cubic-bezier(0.25, 1, 0.4, 1); }
+#tools.gone { opacity: 0; pointer-events: none; }
+#notice-slot { flex: 1; display: flex; justify-content: flex-end; pointer-events: none; }
+.circle { position: relative; width: calc(42px * var(--s)); height: calc(42px * var(--s)); border-radius: 50%; flex: none; display: grid; place-items: center;
+  background: rgba(30, 30, 36, 0.38); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2), 0 calc(3px * var(--s)) calc(10px * var(--s)) rgba(0, 0, 0, 0.18);
+  transition: transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1), background 0.2s; color: rgba(255, 255, 255, 0.85); }
+.circle:hover { transform: scale(1.06); background: rgba(50, 50, 58, 0.5); color: #fff; }
+.circle:active { transform: scale(0.9); }
+/* The eye at the tools' far left, quieter than the others: no glass, a faint disc, a dim sign (his ask, 2026-10-10). */
+.circle.quiet { width: calc(34px * var(--s)); height: calc(34px * var(--s)); background: rgba(255, 255, 255, 0.04); box-shadow: none; color: rgba(255, 255, 255, 0.5); }
+.circle.quiet:hover { background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.85); }
+.circle.quiet svg { width: calc(17px * var(--s)); height: calc(17px * var(--s)); }
+/* Only while the lyrics show with their album card. */
+.circle.quiet { transition: transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1), background 0.2s, opacity 0.25s, scale 0.25s; }
+.circle.quiet.gone { opacity: 0; scale: 0.6; pointer-events: none; }
+.circle.off { color: rgba(255, 255, 255, 0.42); }
+.circle.off:hover { color: rgba(255, 255, 255, 0.62); }
+.circle.none { color: rgba(255, 255, 255, 0.2); pointer-events: none; }
+.circle .ring { position: absolute; left: calc(2.5px * var(--s)); top: calc(2.5px * var(--s)); width: calc(100% - 5px * var(--s)); height: calc(100% - 5px * var(--s));
+  transform: rotate(-90deg); overflow: visible; }
+.circle .ring circle { fill: none; stroke-width: 2.2; }
+.circle .ring .track { stroke: rgba(255, 255, 255, 0.12); }
+.circle .ring .arc { stroke: rgba(255, 255, 255, 0.9); stroke-linecap: round; transition: stroke-dasharray 0.25s ease-out; }
+.circle .ring.spin { animation: ring-turn 0.9s linear infinite; }
+@keyframes ring-turn { from { transform: rotate(-90deg); } to { transform: rotate(270deg); } }
+.circle svg { width: calc(17px * var(--s)); height: calc(17px * var(--s)); }
+
+.notice { display: flex; align-items: center; gap: calc(10px * var(--s)); padding: calc(7px * var(--s)) calc(16px * var(--s)) calc(7px * var(--s)) calc(7px * var(--s));
+  min-height: calc(42px * var(--s)); border-radius: calc(21px * var(--s)); background: rgba(10, 10, 14, 0.62); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 calc(3px * var(--s)) calc(8px * var(--s)) rgba(0, 0, 0, 0.25);
+  animation: notice-in 0.38s cubic-bezier(0.3, 1.3, 0.5, 1) both; transform-origin: right center; }
+.notice.leaving { animation: notice-out 0.35s ease-out both; }
+.notice .note { width: calc(28px * var(--s)); height: calc(28px * var(--s)); border-radius: 50%; background: rgba(255, 255, 255, 0.12); display: grid; place-items: center; flex: none; }
+.notice .note svg { width: calc(14px * var(--s)); height: calc(14px * var(--s)); }
+.notice .text b { display: block; font-size: calc(12.5px * var(--s)); font-weight: 600; }
+.notice .text span { display: block; font-size: calc(11px * var(--s)); color: rgba(255, 255, 255, 0.62); }
+@keyframes notice-in { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+@keyframes notice-out { to { opacity: 0; } }
+
+/* ---- the bar ---- */
+#bar { position: absolute; z-index: 25; left: 50%; transform: translateX(-50%); width: var(--bar-width); height: calc(64px * var(--s)); top: var(--bar-top);
+  display: flex; align-items: center; padding: 0 calc(16px * var(--s)); border-radius: 999px; transition: top 0.6s cubic-bezier(0.25, 1, 0.4, 1); }
+.bar-glass { position: absolute; inset: 0; border-radius: 999px; background: rgba(36, 36, 42, calc(0.5 - 0.2 * var(--glass)));
+  box-shadow: inset 0 0 0 100vmax rgba(255, 255, 255, calc(0.04 + 0.26 * var(--glass) * 0.5)), 0 calc(8px * var(--s)) calc(28px * var(--s)) rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(24px) saturate(1.4); }
+.bar-glass::after { content: ''; position: absolute; inset: 0; border-radius: 999px; padding: 1px; pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, calc(0.35 + 0.5 * var(--glass))) 0%, rgba(255, 255, 255, calc(0.12 + 0.12 * var(--glass))) 45%, rgba(255, 255, 255, calc(0.2 + 0.25 * var(--glass))) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.bar-left, .bar-right { position: relative; display: flex; align-items: center; gap: calc(10px * var(--s)); flex: none; }
+.bar-button { position: relative; width: calc(var(--size) * 1.8px * var(--s)); height: calc(var(--size) * 1.8px * var(--s)); display: grid; place-items: center;
+  transition: transform 0.25s cubic-bezier(0.3, 1.5, 0.5, 1); color: rgba(255, 255, 255, 0.82); }
+.bar-button.quiet { color: rgba(255, 255, 255, 0.48); }
+.bar-button .disc { position: absolute; inset: 0; border-radius: 50%; background: rgba(255, 255, 255, 0); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0);
+  transform: scale(0.55); transition: transform 0.3s cubic-bezier(0.3, 1.5, 0.5, 1), background 0.3s, box-shadow 0.3s; }
+.bar-button .glyph { position: relative; width: calc(var(--size) * 1px * var(--s)); height: calc(var(--size) * 1px * var(--s)); transition: transform 0.3s cubic-bezier(0.3, 1.5, 0.5, 1); }
+.bar-button .glyph svg { width: 100%; height: 100%; display: block; }
+.bar-button:hover, .bar-button.active { color: #fff; }
+.bar-button:hover .disc { transform: scale(1); background: rgba(255, 255, 255, 0.11); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22); }
+.bar-button.active .disc { transform: scale(1); background: rgba(255, 255, 255, 0.16); }
+.bar-button:hover .glyph { transform: scale(1.12); }
+.bar-button:active { transform: scale(0.86); }
+
+.strip { position: relative; flex: 1; min-width: 0; margin: 0 calc(14px * var(--s)); display: flex; flex-direction: column; gap: calc(4px * var(--s)); }
+.strip-row { display: flex; align-items: center; gap: calc(10px * var(--s)); height: calc(38px * var(--s)); }
+.cover-button { position: relative; width: calc(36px * var(--s)); height: calc(36px * var(--s)); flex: none; border-radius: calc(6px * var(--s));
+  transition: transform 0.28s cubic-bezier(0.3, 1.5, 0.5, 1), box-shadow 0.28s; }
+.cover-art, .cover-art img { display: block; width: 100%; height: 100%; border-radius: calc(6px * var(--s)); object-fit: cover; overflow: hidden; }
+.cover-art .no-art { display: grid; place-items: center; width: 100%; height: 100%; background: linear-gradient(135deg, #3d3d3d, #1a1a1a); color: rgba(255, 255, 255, 0.35); }
+.cover-art .no-art svg { width: 40%; height: 40%; }
+.cover-arrow { position: absolute; left: 50%; top: 50%; width: calc(18px * var(--s)); height: calc(18px * var(--s)); margin: calc(-9px * var(--s)) 0 0 calc(-9px * var(--s));
+  border-radius: 50%; background: rgba(0, 0, 0, 0.45); display: grid; place-items: center; opacity: 0; transform: scale(0.5); transition: opacity 0.25s, transform 0.28s cubic-bezier(0.3, 1.5, 0.5, 1); }
+.cover-arrow svg { width: 60%; height: 60%; }
+.cover-button:hover { transform: scale(1.08); box-shadow: 0 0 calc(8px * var(--s)) var(--glow); }
+.cover-button:hover .cover-arrow { opacity: 1; transform: scale(1); }
+.cover-button:active { transform: scale(0.94); }
+.strip-texts { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(2px * var(--s)); }
+.marquee { position: relative; overflow: hidden; white-space: nowrap; }
+.marquee.title { font-size: calc(13.5px * var(--s)); font-weight: 600; }
+.marquee.subtitle { font-size: calc(12px * var(--s)); color: rgba(255, 255, 255, 0.6); }
+.marquee span { display: inline-block; }
+.marquee.overflowing { -webkit-mask: linear-gradient(90deg, transparent 0, #000 6px, #000 calc(100% - 14px), transparent 100%); }
+.marquee .copy { margin-left: 40px; }
+.marquee.overflowing.running span { animation: marquee var(--duration) linear 1.5s infinite; }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(calc(var(--travel) * -1)); } }
+.time-left { font-size: calc(11.5px * var(--s)); font-weight: 600; font-variant-numeric: tabular-nums; color: rgba(255, 255, 255, 0.7); flex: none;
+  opacity: 0; transform: scale(0.8); transform-origin: right center; transition: opacity 0.25s, transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1); width: 0; overflow: hidden; }
+.time-left.shown { opacity: 1; transform: scale(1); width: auto; }
+.time-left.scrubbing { color: #fff; }
+/* The heart (PlayerBar's LikeButton): there where the song can be liked; filled in the song's color, glowing, when it is. */
+.heart { width: 0; height: calc(24px * var(--s)); flex: none; display: grid; place-items: center; border-radius: 50%; color: rgba(255, 255, 255, 0.7);
+  opacity: 0; transform: scale(0.6); overflow: hidden; transition: opacity 0.25s, transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1), width 0.3s, color 0.2s; }
+.heart.shown { width: calc(24px * var(--s)); opacity: 1; transform: scale(1); }
+.heart:hover { color: rgba(255, 255, 255, 0.95); }
+.heart svg { grid-area: 1 / 1; width: calc(14px * var(--s)); height: calc(14px * var(--s)); transition: opacity 0.2s, transform 0.25s; }
+.heart svg + svg { opacity: 0; transform: scale(0.5); }
+.heart.liked { color: var(--like, #fff); filter: drop-shadow(0 0 calc(6px * var(--s)) var(--like, #fff)); }
+.heart.liked svg:first-child { opacity: 0; }
+.heart.liked svg + svg { opacity: 1; transform: scale(1); }
+.heart.beat svg + svg { animation: heart-beat 0.45s cubic-bezier(0.3, 1.4, 0.5, 1); }
+@keyframes heart-beat { 0% { transform: scale(0.5); } 55% { transform: scale(1.3); } 100% { transform: scale(1); } }
+.more { width: calc(22px * var(--s)); height: calc(22px * var(--s)); color: rgba(255, 255, 255, 0.85); flex: none; display: grid; place-items: center; border-radius: 50%; }
+.more:hover { background: rgba(255, 255, 255, 0.1); }
+.more svg { width: calc(14px * var(--s)); height: calc(14px * var(--s)); }
+.progress { position: relative; height: calc(6px * var(--s)); }
+.progress .rail, .progress .fill { position: absolute; left: 0; bottom: 0; width: 100%; height: calc(2px * var(--s)); border-radius: 99px; transition: height 0.22s ease-out; }
+.progress .rail { background: rgba(255, 255, 255, 0.16); }
+.progress .fill { background: rgba(255, 255, 255, 0.9); transform-origin: left center; transform: scaleX(0); }
+.progress.thick .rail, .progress.thick .fill { height: calc(4px * var(--s)); }
+
+.volume { display: flex; align-items: center; gap: calc(4px * var(--s)); }
+.volume input { width: 0; opacity: 0; transition: width 0.4s cubic-bezier(0.3, 1.2, 0.5, 1), opacity 0.3s; -webkit-appearance: none; appearance: none; height: calc(4px * var(--s));
+  border-radius: 99px; background: linear-gradient(90deg, rgba(255,255,255,0.9) var(--fill, 50%), rgba(255,255,255,0.2) var(--fill, 50%)); pointer-events: none; }
+.volume.open input { width: calc(84px * var(--s)); opacity: 1; pointer-events: auto; }
+.volume input::-webkit-slider-thumb { -webkit-appearance: none; width: calc(12px * var(--s)); height: calc(12px * var(--s)); border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+
+/* ---- the player made small (MiniBar.swift) ---- */
+#mini { position: absolute; left: 50%; top: calc(var(--bar-top) + 4px * var(--s)); height: calc(56px * var(--s)); transform: translateX(-50%) scale(1);
+  display: flex; align-items: center; gap: calc(10px * var(--s)); padding: 0 calc(10px * var(--s)) 0 calc(8px * var(--s)); border-radius: 999px;
+  transition: opacity 0.35s, transform 0.5s cubic-bezier(0.3, 1.3, 0.5, 1); }
+#mini.hidden { opacity: 0; transform: translateX(-50%) scale(1.3); pointer-events: none; }
+#bar.hidden { opacity: 0; transform: translateX(-50%) scale(0.72); pointer-events: none; }
+#bar { transition: top 0.6s cubic-bezier(0.25, 1, 0.4, 1), opacity 0.35s, transform 0.5s cubic-bezier(0.3, 1.3, 0.5, 1); }
+#mini .mini-art { position: relative; width: calc(40px * var(--s)); height: calc(40px * var(--s)); border-radius: calc(9px * var(--s)); overflow: hidden; flex: none;
+  box-shadow: 0 calc(2px * var(--s)) calc(4px * var(--s)) rgba(0, 0, 0, 0.3); background: rgb(51, 51, 51); display: grid; place-items: center; color: rgba(255,255,255,0.5); }
+#mini .mini-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#mini .mini-art svg { width: 45%; height: 45%; }
+#mini .mini-texts { position: relative; width: calc(150px * var(--s)); display: flex; flex-direction: column; gap: calc(1px * var(--s)); }
+#mini .mini-texts .marquee.title { font-size: calc(13px * var(--s)); }
+#mini .mini-texts .marquee.subtitle { font-size: calc(11.5px * var(--s)); }
+#mini .mini-buttons { position: relative; display: flex; align-items: center; gap: calc(2px * var(--s)); }
+
+/* ---- the lyrics, at the right of the playing album's card where an album's songs are listed, or with no card across
+   the cards' place (LyricsStage.swift, WordBlock.swift) ---- */
+#lyrics { position: absolute; z-index: 2; left: 0; width: 100%; top: calc(40px * var(--s)); height: var(--carousel-height);
+  pointer-events: none; transition: opacity 0.45s ease-out 0.2s, transform 0.45s ease-out 0.2s; }
+#lyrics.beside { left: calc(50% + var(--lyrics-x) - var(--lyrics-width) / 2); width: var(--lyrics-width);
+  transition: opacity 0.38s 0.2s, transform 0.55s 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.04); }
+#lyrics.hidden { opacity: 0; transform: translateY(calc(14px * var(--s))); transition: opacity 0.18s ease-in, transform 0.18s ease-in; }
+#lyrics.beside.hidden { transform: translateX(calc(-30px * var(--s))); }
+#lyrics .stage { position: absolute; inset: 0; }
+#lyrics .lens { position: absolute; inset: 0; perspective-origin: 50% 45%; }
+#lyrics .block { position: absolute; left: 50%; top: 45%; transform: scale(1.15); transform-style: preserve-3d; }
+#lyrics .strip { position: absolute; left: 50%; top: 50%; background-repeat: no-repeat; backface-visibility: hidden; will-change: transform, opacity; }
+#lyrics .adlibs { position: absolute; inset: 0; }
+#lyrics .adlib { position: absolute; white-space: nowrap; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); opacity: 0; }
+#lyrics .quiet { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(12px * var(--s));
+  color: rgba(255, 255, 255, 0.7); font-size: calc(17px * var(--s)); font-weight: 600; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45); }
+#lyrics .quiet.gone { display: none; }
+#lyrics .quiet-icon svg { width: calc(30px * var(--s)); height: calc(30px * var(--s)); }
+#lyrics .quiet.loading .quiet-icon { animation: pulse 1.2s ease-in-out infinite; }
+/* Looking for the song's words by hand (SearchLyricsButton): a small glass capsule under the words when there are none,
+   and, fainter, under the album's card beside them ("Other lyrics"). */
+.lyrics-search { display: inline-flex; align-items: center; gap: calc(6px * var(--s)); pointer-events: auto; cursor: pointer;
+  padding: calc(6px * var(--s)) calc(12px * var(--s)); border: 0; border-radius: 999px; font: inherit; font-size: calc(13px * var(--s)); font-weight: 600;
+  color: rgba(255, 255, 255, 0.92); background: rgba(255, 255, 255, 0.14); box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.18);
+  text-shadow: none; transition: background 0.15s ease-out, color 0.15s ease-out, opacity 0.25s ease-out; margin-top: calc(4px * var(--s)); }
+.lyrics-search svg { width: calc(13px * var(--s)); height: calc(13px * var(--s)); }
+.lyrics-search:hover { background: rgba(255, 255, 255, 0.2); }
+.lyrics-search.gone { display: none; }
+#other-lyrics { position: absolute; z-index: 3; margin: 0; font-size: calc(11.5px * var(--s)); color: rgba(255, 255, 255, 0.55); background: rgba(255, 255, 255, 0.08);
+  left: calc(50% + var(--card-x)); top: calc(40px * var(--s) + var(--carousel-height) / 2 + var(--card-height) / 2 + calc(30px * var(--s)));
+  transform: translate(-50%, -50%); animation: other-in 0.25s ease-out both; }
+#other-lyrics:hover { color: rgba(255, 255, 255, 0.92); background: rgba(255, 255, 255, 0.2); }
+@keyframes other-in { from { opacity: 0; } }
+.notice .note .ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.notice .note { position: relative; }
+.notice .note .ring circle { fill: none; stroke-width: 2.4; }
+.notice .note .ring .track { stroke: rgba(255, 255, 255, 0.16); }
+.notice .note .ring .arc { stroke: rgba(255, 255, 255, 0.9); stroke-linecap: round; transition: stroke-dasharray 0.3s linear; }
+.notice .note .spinner { position: absolute; inset: 2px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.16); border-top-color: rgba(255, 255, 255, 0.85); animation: turn 0.8s linear infinite; }
+@keyframes turn { to { transform: rotate(1turn); } }
+@keyframes pulse { 50% { opacity: 0.35; } }
+
+/* A song or album on its way: a turning ring and a word of it, breathing. */
+.spinner { display: inline-block; width: calc(13px * var(--s)); height: calc(13px * var(--s)); border-radius: 50%; vertical-align: middle;
+  border: calc(2px * var(--s)) solid rgba(255, 255, 255, 0.18); border-top-color: #fff; border-right-color: #fff; animation: turn 0.75s linear infinite; }
+@keyframes turn { to { transform: rotate(360deg); } }
+.card .caption .line.starting { display: flex; align-items: center; gap: calc(7px * var(--s)); animation: breathe 0.9s ease-in-out infinite alternate; }
+@keyframes breathe { from { opacity: 0.45; } to { opacity: 1; } }
+
+/* ---- search (SearchBar.swift, SearchGrid.swift) ---- */
+/* The magnifier springs open, leftward, into a glass bar as wide as the player's bar; the other circles step aside. */
+#searchbar { width: calc(42px * var(--s)); border-radius: 999px; justify-content: start; display: flex; align-items: center; overflow: hidden;
+  transition: width 0.5s cubic-bezier(0.3, 1.25, 0.4, 1), transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1), background 0.2s; }
+#searchbar .mag { width: calc(42px * var(--s)); height: calc(42px * var(--s)); flex: none; display: grid; place-items: center; color: rgba(255, 255, 255, 0.72); }
+#searchbar:hover .mag, #searchbar.open .mag { color: rgba(255, 255, 255, 0.92); }
+#searchbar .mag svg { width: calc(17px * var(--s)); height: calc(17px * var(--s)); }
+#searchbar input { flex: 1; min-width: 0; height: 100%; border: none; outline: none; background: none; color: #fff; caret-color: #fff;
+  font: 500 calc(15.5px * var(--s)) "Segoe UI Variable Text", "Segoe UI", sans-serif; opacity: 0; transition: opacity 0.15s; pointer-events: none; }
+#searchbar input::placeholder { color: rgba(255, 255, 255, 0.42); }
+#searchbar .spin, #searchbar .clear { flex: none; opacity: 0; transition: opacity 0.18s, transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1); }
+#searchbar .spin { width: calc(14px * var(--s)); height: calc(14px * var(--s)); margin-right: calc(10px * var(--s)); border-radius: 50%;
+  border: calc(2px * var(--s)) solid rgba(255, 255, 255, 0.2); border-top-color: rgba(255, 255, 255, 0.8); animation: turn 0.8s linear infinite; display: none; }
+#searchbar .clear { width: calc(18px * var(--s)); height: calc(18px * var(--s)); margin-right: calc(14px * var(--s)); color: rgba(255, 255, 255, 0.5); transform: scale(0.6); display: none; }
+#searchbar .clear svg { width: 100%; height: 100%; display: block; }
+#searchbar.open { width: var(--bar-width); background: rgba(30, 30, 36, 0.5); }
+#searchbar.open:hover { transform: none; }
+#searchbar.open input { opacity: 1; pointer-events: auto; transition-delay: 0.14s; }
+#searchbar.open.busy .spin { display: block; opacity: 1; }
+/* The × clears what is typed, and with nothing typed closes search. */
+#searchbar.open .clear { display: grid; place-items: center; opacity: 1; transform: scale(1); }
+#tools.searching .circle:not(#searchbar), #tools.searching #notice-slot:empty { display: none; }
+/* A notice while searching — a song lined up from its results (QueueMenu.swift) — beside the bar, which makes room. */
+#tools.searching #notice-slot:not(:empty) { flex: none; }
+#tools.searching #searchbar.open { flex: 0 1 auto; min-width: 0; }
+
+/* The results, on dark glass where the cards were. */
+#search-grid { position: absolute; z-index: 20; left: 50%; top: calc(40px * var(--s)); width: var(--bar-width); height: var(--carousel-height); transform: translateX(-50%);
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1); }
+#search-grid.hidden { opacity: 0; transform: translateX(-50%) translateY(calc(10px * var(--s))) scale(0.98); pointer-events: none; }
+#search-grid .glass { position: absolute; inset: 0; border-radius: calc(24px * var(--s)); background: rgba(16, 16, 20, calc(0.5 + 0.15 * var(--glass)));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 calc(12px * var(--s)) calc(36px * var(--s)) rgba(0, 0, 0, 0.35); backdrop-filter: blur(28px) saturate(1.3); }
+#search-grid .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; border-radius: calc(24px * var(--s)); scrollbar-width: none; }
+#search-grid .scroll::-webkit-scrollbar { display: none; }
+#search-grid .content { position: relative; width: 100%; }
+#search-grid .section { position: absolute; font-size: calc(13px * var(--s)); font-weight: 700; color: rgba(255, 255, 255, 0.9); letter-spacing: 0.01em; }
+#search-grid .note { position: absolute; inset: 0; display: grid; place-items: center; font-size: calc(14px * var(--s)); color: rgba(255, 255, 255, 0.5);
+  opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+#search-grid .note.shown { opacity: 1; }
+/* Faint shapes breathing while the first results are on their way. */
+#search-grid.ghosts .content::before { content: ''; position: absolute; left: calc(20px * var(--s)); right: calc(20px * var(--s)); top: calc(44px * var(--s));
+  height: calc(var(--bar-width) / 6 - 12px * var(--s)); border-radius: calc(10px * var(--s));
+  background: repeating-linear-gradient(to right, rgba(255, 255, 255, 0.07) 0, rgba(255, 255, 255, 0.07) calc((100% - 70px * var(--s)) / 6), transparent calc((100% - 70px * var(--s)) / 6), transparent calc((100% - 70px * var(--s)) / 6 + 14px * var(--s)));
+  animation: breathe 0.9s ease-in-out infinite alternate; }
+
+.result { position: absolute; }
+.result .art { position: relative; overflow: visible; }
+.result img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; transition: opacity 0.25s; }
+.result .words { display: flex; flex-direction: column; min-width: 0; }
+.result .words b, .result .words span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.result .words span { color: rgba(255, 255, 255, 0.55); }
+/* A tile or an artist's circle: under the pointer the cover grows toward you and its play button comes up. */
+.result.tile .art, .result.round .art { width: 100%; aspect-ratio: 1; border-radius: calc(10px * var(--s)); background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 calc(5px * var(--s)) calc(9px * var(--s)) rgba(0, 0, 0, 0.3); transition: transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1), box-shadow 0.3s; }
+.result.round .art { border-radius: 50%; }
+.result.tile .words, .result.round .words { padding: calc(6px * var(--s)) calc(1px * var(--s)) 0; gap: calc(1px * var(--s)); }
+.result.round .words { align-items: center; text-align: center; }
+.result.tile .words b, .result.round .words b { font-size: calc(12.5px * var(--s)); font-weight: 600; max-width: 100%; }
+.result.tile .words span, .result.round .words span { font-size: calc(11px * var(--s)); max-width: 100%; }
+.result .disc { position: absolute; width: calc(30px * var(--s)); height: calc(30px * var(--s)); right: calc(7px * var(--s)); bottom: calc(7px * var(--s));
+  border-radius: 50%; background: rgba(255, 255, 255, 0.92); color: #111; display: grid; place-items: center; opacity: 0; transform: scale(0.7);
+  box-shadow: 0 calc(1px * var(--s)) calc(4px * var(--s)) rgba(0, 0, 0, 0.35); transition: opacity 0.2s, transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1); }
+.result.round .disc { right: auto; bottom: auto; left: 50%; top: 50%; margin: calc(-15px * var(--s)) 0 0 calc(-15px * var(--s)); }
+.result .disc svg { width: 46%; height: 46%; margin-left: 8%; }
+.result.lit .art, .result.chosen .art { transform: scale(1.05) translateY(calc(-2px * var(--s))); box-shadow: 0 calc(9px * var(--s)) calc(18px * var(--s)) rgba(0, 0, 0, 0.4); }
+.result.lit .disc, .result.chosen .disc { opacity: 1; transform: scale(1); }
+.result.chosen .art::after { content: ''; position: absolute; inset: calc(-4px * var(--s)); border-radius: calc(14px * var(--s)); box-shadow: 0 0 0 calc(2px * var(--s)) rgba(255, 255, 255, 0.85); }
+.result.round.chosen .art::after { border-radius: 50%; }
+/* A song in the Songs list: a row with a small cover; under the pointer it lights and its cover darkens with a play glyph. */
+.result.row { display: flex; align-items: center; gap: calc(10px * var(--s)); padding: 0 calc(8px * var(--s)); border-radius: calc(10px * var(--s)); transition: background 0.15s; }
+.result.row .art { width: calc(36px * var(--s)); height: calc(36px * var(--s)); flex: none; border-radius: calc(6px * var(--s)); background: rgba(255, 255, 255, 0.07); }
+.result.row .play { position: absolute; inset: 0; border-radius: inherit; background: rgba(0, 0, 0, 0.45); display: grid; place-items: center; opacity: 0; transition: opacity 0.15s; }
+.result.row .play svg { width: 45%; height: 45%; }
+.result.row .words { flex: 1; gap: calc(1px * var(--s)); }
+.result.row .words b { font-size: calc(13px * var(--s)); font-weight: 600; }
+.result.row .words span { font-size: calc(11.5px * var(--s)); }
+.result.row .time { font-size: calc(11.5px * var(--s)); color: rgba(255, 255, 255, 0.5); font-variant-numeric: tabular-nums; }
+.result.row.lit, .result.row.chosen { background: rgba(255, 255, 255, 0.08); }
+.result.row.lit .play, .result.row.chosen .play { opacity: 1; }
+.result.playing .words b { color: #fff; }
+.result.playing.row { background: rgba(255, 255, 255, 0.12); }
+.result.playing .words span::before { content: '♪ '; color: rgba(255, 255, 255, 0.8); }
+/* Picked: it lifts above the rest and breathes while Spotify gets it ready. */
+.result.landing { z-index: 2; }
+.result.landing .art { transform: scale(1.08) translateY(calc(-4px * var(--s))); box-shadow: 0 calc(14px * var(--s)) calc(30px * var(--s)) rgba(0, 0, 0, 0.5);
+  animation: waiting 1.3s ease-in-out infinite alternate; }
+.result.landing .words span { color: rgba(255, 255, 255, 0.85); animation: breathe 0.9s ease-in-out infinite alternate; }
+.result.landing .words span::before { content: ''; }
+@keyframes waiting { from { transform: scale(1.08) translateY(calc(-4px * var(--s))); } to { transform: scale(1.11) translateY(calc(-7px * var(--s))); } }
+.result.refused .words span { animation: none; color: rgba(255, 140, 140, 0.95); }
+
+/* ---- the source at the bar's left end, and the places to listen (SourceMark.swift) ---- */
+.source-button { position: relative; width: calc(26px * var(--s)); height: calc(26px * var(--s)); flex: none; margin-right: calc(4px * var(--s));
+  display: grid; place-items: center; transition: transform 0.28s cubic-bezier(0.3, 1.5, 0.5, 1); filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3)); }
+.source-button svg { width: 100%; height: 100%; display: block; }
+.source-button .neutral { color: rgba(255, 255, 255, 0.8); width: 86%; height: 86%; }
+.source-button:hover, .source-button.open { transform: scale(1.1); }
+.source-button:active { transform: scale(0.92); }
+.source-button .logo { width: 100%; height: 100%; animation: logo-in 0.45s cubic-bezier(0.3, 1.4, 0.5, 1); }
+@keyframes logo-in { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
+/* Over the bar's left end, beside the bar rather than in it: inside the bar's own glass its blur couldn't reach the
+   cards behind. */
+#source-menu { position: absolute; left: calc(50% - var(--bar-width) / 2 + 6px * var(--s)); top: calc(var(--bar-top) - 12px * var(--s));
+  transform: translateY(-100%); width: calc(214px * var(--s)); padding: calc(7px * var(--s));
+  border-radius: calc(22px * var(--s)); display: flex; flex-direction: column; gap: calc(2px * var(--s)); transform-origin: left bottom;
+  transition: opacity 0.25s, transform 0.42s cubic-bezier(0.3, 1.3, 0.5, 1); z-index: 30; }
+#source-menu.hidden { opacity: 0; transform: translateY(-100%) scale(0.85); pointer-events: none; }
+#source-menu .menu-glass { position: absolute; inset: 0; border-radius: inherit; background: rgba(28, 28, 34, calc(0.66 - 0.2 * var(--glass)));
+  box-shadow: inset 0 0 0 100vmax rgba(255, 255, 255, calc(0.03 + 0.1 * var(--glass))), 0 calc(8px * var(--s)) calc(18px * var(--s)) rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(24px) saturate(1.4); }
+#source-menu .menu-glass::after { content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.14) 45%, rgba(255, 255, 255, 0.28) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.source-row { position: relative; display: flex; align-items: center; gap: calc(11px * var(--s)); height: calc(38px * var(--s)); padding: 0 calc(9px * var(--s));
+  border-radius: calc(13px * var(--s)); font-size: calc(13.5px * var(--s)); font-weight: 600; color: rgba(255, 255, 255, 0.85); text-align: left;
+  transition: background 0.15s, opacity 0.3s, transform 0.42s cubic-bezier(0.3, 1.4, 0.5, 1); }
+.source-row:hover { background: rgba(255, 255, 255, 0.09); }
+.source-row.chosen { background: rgba(255, 255, 255, 0.14); color: #fff; font-weight: 700; }
+.source-row .row-logo { width: calc(26px * var(--s)); height: calc(26px * var(--s)); flex: none; display: grid; place-items: center; }
+.source-row .row-logo svg { width: 100%; height: 100%; }
+.source-row .row-logo.sparkles svg { width: 62%; height: 62%; color: rgba(255, 255, 255, 0.85); }
+.source-row .name { flex: 1; }
+.source-row .tick { width: calc(11px * var(--s)); height: calc(11px * var(--s)); opacity: 0; }
+.source-row.chosen .tick { opacity: 1; }
+.source-divider { position: relative; height: 1px; margin: calc(3px * var(--s)) calc(8px * var(--s)); background: rgba(255, 255, 255, 0.12); }
+#source-menu.hidden .source-row, #source-menu.hidden .source-divider { opacity: 0; transform: translateY(calc(14px * var(--s))) scale(0.9); }
+
+/* ---- a song on its way (StartingPanel.swift) ---- */
+#starting { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(1); display: flex; flex-direction: column; align-items: center;
+  padding: calc(26px * var(--s)) calc(30px * var(--s)) calc(22px * var(--s)); border-radius: calc(32px * var(--s)); min-width: calc(var(--start-side) + 60px * var(--s));
+  transition: opacity 0.35s, transform 0.5s cubic-bezier(0.3, 1.25, 0.5, 1); pointer-events: none; z-index: 6; }
+#starting.hidden { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+/* Gone, its light and bars stop where they are: they ran on unseen, a style worked out again for every frame (memory
+   measured, 2026-10-10). */
+#starting.hidden .start-cover, #starting.hidden .orbit, #starting.hidden .start-bars i { animation-play-state: paused; }
+#starting.leaving { opacity: 0; transform: translate(-50%, -50%) scale(1.06); }
+#starting.away { opacity: 0; transform: translate(-50%, -50%) scale(0.94); }
+#starting.away .start-cover, #starting.away .orbit, #starting.away .start-bars i { animation-play-state: paused; }
+#starting .start-glass { position: absolute; inset: 0; border-radius: inherit; background: rgba(36, 36, 42, calc(0.55 - 0.2 * var(--glass)));
+  box-shadow: inset 0 0 0 100vmax rgba(255, 255, 255, calc(0.04 + 0.13 * var(--glass))), 0 calc(12px * var(--s)) calc(36px * var(--s)) rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(24px) saturate(1.3); }
+#starting .start-glass::after { content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, calc(0.35 + 0.5 * var(--glass))) 0%, rgba(255, 255, 255, calc(0.12 + 0.12 * var(--glass))) 45%, rgba(255, 255, 255, calc(0.2 + 0.25 * var(--glass))) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+#starting .start-cover { position: relative; width: var(--start-side); height: var(--start-side); border-radius: calc(20px * var(--s));
+  box-shadow: 0 calc(12px * var(--s)) calc(22px * var(--s)) rgba(0, 0, 0, 0.45); animation: start-breathe 1.5s ease-in-out infinite; }
+#starting .start-cover img, #starting .start-cover .none { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: inherit; object-fit: cover; display: block;
+  background: rgba(255, 255, 255, 0.07); animation: start-art 0.3s ease-out; }
+@keyframes start-art { from { opacity: 0; } }
+@keyframes start-breathe { 50% { transform: scale(1.018); } }
+@property --orbit { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+#starting .orbit { position: absolute; inset: calc(-3.5px * var(--s)); border-radius: calc(23.5px * var(--s)); padding: calc(3.5px * var(--s));
+  background: conic-gradient(from var(--orbit), transparent 0deg, transparent 162deg, rgba(255, 255, 255, 0.3) 280deg, #fff 349deg, transparent 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  filter: drop-shadow(0 0 calc(6px * var(--s)) rgba(255, 255, 255, 0.55)); animation: orbit 1.3s linear infinite; }
+@keyframes orbit { to { --orbit: 360deg; } }
+#starting.failed .orbit { opacity: 0; transition: opacity 0.3s; }
+#starting.failed .start-cover { animation: none; }
+#starting .start-title { position: relative; margin-top: calc(18px * var(--s)); font-size: calc(19px * var(--s)); font-weight: 700; max-width: calc(var(--start-side) + 40px * var(--s));
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#starting .start-artist { position: relative; margin-top: calc(3px * var(--s)); font-size: calc(14px * var(--s)); font-weight: 500; color: rgba(255, 255, 255, 0.6);
+  max-width: calc(var(--start-side) + 40px * var(--s)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#starting .start-pill { position: relative; margin-top: calc(14px * var(--s)); height: calc(30px * var(--s)); padding: 0 calc(13px * var(--s)); border-radius: 999px;
+  display: flex; align-items: center; gap: calc(8px * var(--s)); background: rgba(255, 255, 255, 0.08); font-size: calc(12.5px * var(--s)); font-weight: 600; color: rgba(255, 255, 255, 0.78); }
+#starting .start-pill .pill-logo { width: calc(18px * var(--s)); height: calc(18px * var(--s)); display: grid; place-items: center; }
+#starting .start-pill .pill-logo svg { width: 100%; height: 100%; }
+#starting .start-bars { display: flex; align-items: center; gap: calc(2.5px * var(--s)); height: calc(13px * var(--s)); }
+#starting .start-bars i { width: calc(3px * var(--s)); height: calc(12px * var(--s)); border-radius: 99px; background: currentColor; animation: start-bar 0.9s ease-in-out infinite; }
+#starting .start-bars i:nth-child(2) { animation-delay: -0.27s; }
+#starting .start-bars i:nth-child(3) { animation-delay: -0.54s; }
+@keyframes start-bar { 0%, 100% { transform: scaleY(0.42); } 50% { transform: scaleY(1); } }
+#starting.shake { animation: start-shake 0.5s; }
+@keyframes start-shake { 20% { translate: calc(9px * var(--s)) 0; } 40% { translate: calc(-8px * var(--s)) 0; } 60% { translate: calc(6px * var(--s)) 0; } 80% { translate: calc(-4px * var(--s)) 0; } }
+#stage { transition: opacity 0.45s, transform 0.55s cubic-bezier(0.3, 1.1, 0.5, 1), filter 0.45s; }
+body.waiting #stage, body.asking #stage { opacity: 0 !important; transform: scale(0.88); filter: blur(calc(14px * var(--s))); pointer-events: none; }
+body.waiting #empty, body.waiting #aura, body.waiting #refusal,
+body.asking #empty, body.asking #aura, body.asking #refusal { opacity: 0 !important; transition: opacity 0.3s; }
+
+/* ---- the extension asked for (ExtensionCard.swift): music in a browser, and iBaila not there yet ---- */
+#ext-card { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(1); width: calc(400px * var(--s)); box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; text-align: center; padding: calc(24px * var(--s)) calc(34px * var(--s)) calc(22px * var(--s));
+  border-radius: calc(32px * var(--s)); transition: opacity 0.35s, transform 0.5s cubic-bezier(0.3, 1.25, 0.5, 1); z-index: 6; }
+#ext-card.hidden { opacity: 0; transform: translate(-50%, -50%) scale(0.86); pointer-events: none; }
+#ext-card.hidden .start-bars i { animation-play-state: paused; }
+#ext-card .ext-glass { position: absolute; inset: 0; border-radius: inherit; background: rgba(36, 36, 42, calc(0.55 - 0.2 * var(--glass)));
+  box-shadow: inset 0 0 0 100vmax rgba(255, 255, 255, calc(0.04 + 0.13 * var(--glass))), 0 calc(12px * var(--s)) calc(36px * var(--s)) rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(24px) saturate(1.3); }
+#ext-card .ext-glass::after { content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: linear-gradient(135deg, rgba(255, 255, 255, calc(0.35 + 0.5 * var(--glass))) 0%, rgba(255, 255, 255, calc(0.12 + 0.12 * var(--glass))) 45%, rgba(255, 255, 255, calc(0.2 + 0.25 * var(--glass))) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+#ext-card > :not(.ext-glass) { position: relative; }
+#ext-card .ext-icon { width: calc(56px * var(--s)); height: calc(56px * var(--s)); border-radius: 50%; display: grid; place-items: center; color: #fff;
+  background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14); transition: background 0.3s; }
+#ext-card .ext-icon svg { width: calc(30px * var(--s)); height: calc(30px * var(--s)); }
+#ext-card.arrived .ext-icon { background: rgba(255, 255, 255, 0.16); }
+#ext-card .ext-title { margin-top: calc(14px * var(--s)); font-size: calc(20px * var(--s)); font-weight: 700; color: #fff; }
+#ext-card .ext-words { margin-top: calc(6px * var(--s)); font-size: calc(13.5px * var(--s)); font-weight: 500; line-height: 1.4; color: rgba(255, 255, 255, 0.66); }
+#ext-card .ext-add { margin-top: calc(16px * var(--s)); height: calc(40px * var(--s)); padding: 0 calc(26px * var(--s)); border: 0; border-radius: 999px; cursor: pointer;
+  font: inherit; font-size: calc(14.5px * var(--s)); font-weight: 600; color: rgba(0, 0, 0, 0.88); background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 calc(4px * var(--s)) calc(10px * var(--s)) rgba(0, 0, 0, 0.25); transition: transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1), background 0.2s; }
+#ext-card .ext-add:hover { transform: scale(1.04); background: #fff; }
+#ext-card .ext-add:active { transform: scale(0.96); }
+#ext-card .ext-note { margin-top: calc(10px * var(--s)); font-size: calc(11px * var(--s)); font-weight: 500; color: rgba(255, 255, 255, 0.4); }
+#ext-card .ext-wait { margin-top: calc(16px * var(--s)); height: calc(36px * var(--s)); padding: 0 calc(16px * var(--s)); border-radius: 999px; display: flex; align-items: center;
+  gap: calc(8px * var(--s)); background: rgba(255, 255, 255, 0.08); font-size: calc(13px * var(--s)); font-weight: 600; color: rgba(255, 255, 255, 0.82); }
+#ext-card .ext-wait .start-bars { display: flex; align-items: center; gap: calc(2.5px * var(--s)); height: calc(13px * var(--s)); }
+#ext-card .ext-wait .start-bars i { width: calc(3px * var(--s)); height: calc(12px * var(--s)); border-radius: 99px; background: currentColor; animation: start-bar 0.9s ease-in-out infinite; }
+#ext-card .ext-wait .start-bars i:nth-child(2) { animation-delay: -0.27s; }
+#ext-card .ext-wait .start-bars i:nth-child(3) { animation-delay: -0.54s; }
+#ext-card .ext-again { margin-top: calc(10px * var(--s)); border: 0; background: none; cursor: pointer; font: inherit; font-size: calc(12px * var(--s)); font-weight: 500;
+  color: rgba(255, 255, 255, 0.55); text-decoration: underline; }
+#ext-card .ext-wait, #ext-card .ext-again { display: none; }
+#ext-card.adding .ext-add, #ext-card.adding .ext-note { display: none; }
+#ext-card.adding .ext-wait, #ext-card.adding .ext-again { display: flex; }
+#ext-card.arrived .ext-add, #ext-card.arrived .ext-note, #ext-card.arrived .ext-wait, #ext-card.arrived .ext-again { display: none; }
+
+/* No albums yet: a quiet line where the cards will be, small and light, nothing round it (his ask, 2026-10-10). */
+#empty { width: auto !important; height: auto !important; background: none !important; box-shadow: none !important; backdrop-filter: none !important;
+  white-space: nowrap; font-size: calc(13px * var(--s)); font-weight: 300; letter-spacing: calc(0.3px * var(--s));
+  color: rgba(255, 255, 255, 0.62); text-shadow: 0 0 calc(6px * var(--s)) rgba(0, 0, 0, 0.45); transition: opacity 0.3s; }
+
+/* ---- an album opened (AlbumSongs.swift): its songs on dark glass at the right of its turned card ---- */
+#album { position: absolute; left: 50%; top: 50%; z-index: 400; width: var(--album-width); height: var(--album-height);
+  display: flex; flex-direction: column; color: #fff; border-radius: calc(22px * var(--s)); overflow: hidden;
+  background: rgba(14, 14, 18, 0.6); backdrop-filter: blur(26px) saturate(1.2);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.13), inset 1px 1px 0 rgba(255, 255, 255, 0.18), 0 calc(18px * var(--s)) calc(50px * var(--s)) rgba(0, 0, 0, 0.35);
+  transform: translate(calc(-50% + var(--album-x)), -50%);
+  transition: opacity 0.38s 0.2s, transform 0.55s 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.04); }
+#album.hidden { opacity: 0; pointer-events: none; transform: translate(calc(-50% + var(--album-x) - 30px * var(--s)), -50%);
+  transition: opacity 0.18s, transform 0.18s ease-in; }
+.album-head { display: flex; align-items: flex-start; gap: calc(10px * var(--s)); padding: calc(16px * var(--s)) calc(18px * var(--s)) calc(10px * var(--s)); }
+.album-words { flex: 1; min-width: 0; }
+.album-title { font-size: calc(16px * var(--s)); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.album-sub { margin-top: calc(3px * var(--s)); font-size: calc(11.5px * var(--s)); font-weight: 500; color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.album-close { flex: none; width: calc(24px * var(--s)); height: calc(24px * var(--s)); border: 0; border-radius: 50%; padding: 0;
+  display: grid; place-items: center; background: rgba(255, 255, 255, 0.1); transition: background 0.15s; cursor: default; }
+.album-close:hover { background: rgba(255, 255, 255, 0.2); }
+.album-close svg { width: 46%; height: 46%; stroke: rgba(255, 255, 255, 0.8); stroke-width: 3; stroke-linecap: round; fill: none; }
+.album-rule { height: 1px; margin: 0 calc(14px * var(--s)); background: rgba(255, 255, 255, 0.08); }
+.album-rows { position: relative; flex: 1; overflow-y: auto; overflow-x: hidden; padding: calc(8px * var(--s)) calc(12px * var(--s)) calc(22px * var(--s));
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 calc(8px * var(--s)), #000 calc(100% - 18px * var(--s)), transparent 100%); }
+/* A thin bar, always faintly there while more than fits. */
+.album-rows::-webkit-scrollbar { width: calc(7px * var(--s)); }
+.album-rows::-webkit-scrollbar-track { background: transparent; margin: calc(10px * var(--s)) 0; }
+.album-rows::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 99px;
+  border: calc(2px * var(--s)) solid transparent; background-clip: content-box; }
+.album-song { position: relative; display: flex; align-items: center; gap: calc(12px * var(--s)); height: calc(52px * var(--s));
+  margin-bottom: calc(2px * var(--s)); padding: 0 calc(10px * var(--s)); border-radius: calc(12px * var(--s));
+  transition: opacity 0.4s, background 0.15s, transform 0.6s cubic-bezier(0.3, 1.4, 0.5, 1), box-shadow 0.4s;
+  animation: song-arrive 0.5s cubic-bezier(0.2, 0.9, 0.3, 1) backwards; animation-delay: calc(min(var(--i) * 28ms, 420ms)); }
+@keyframes song-arrive { from { opacity: 0; transform: translateY(calc(10px * var(--s))); } }
+.album-song:hover { background: rgba(255, 255, 255, 0.09); }
+.album-song:not(.playing):active { transform: scale(0.985); }
+.album-rows.has-playing .album-song:not(.playing):not(:hover):not(.pending) { opacity: 0.4; }
+.album-song .cover { position: relative; flex: none; width: calc(40px * var(--s)); height: calc(40px * var(--s)); border-radius: calc(7px * var(--s));
+  background: rgba(255, 255, 255, 0.08) center / cover no-repeat; overflow: hidden; }
+.album-song .cover .over { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, 0.42); opacity: 0; transition: opacity 0.15s; }
+.album-song:hover .cover .over, .album-song.pending .cover .over, .album-song.playing .cover .over { opacity: 1; }
+.album-song .cover .over svg { width: 42%; height: 42%; fill: #fff; }
+.album-song .cover .over .spin { width: 38%; height: 38%; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.3); border-top-color: #fff; animation: turn 0.8s linear infinite; }
+.album-song .cover .over .bars { display: flex; align-items: flex-end; gap: calc(2px * var(--s)); height: 36%; }
+.album-song .cover .over .bars i { width: calc(3px * var(--s)); height: 100%; border-radius: 2px; background: #fff; transform-origin: bottom; animation: album-bar 0.9s ease-in-out infinite alternate; }
+.album-song .cover .over .bars i:nth-child(2) { animation-delay: -0.3s; } .album-song .cover .over .bars i:nth-child(3) { animation-delay: -0.6s; }
+.album-rows:not(.running) .album-song .cover .over .bars i { animation-play-state: paused; }
+@keyframes album-bar { from { transform: scaleY(0.3); } to { transform: scaleY(1); } }
+.album-song .words { flex: 1; min-width: 0; }
+.album-song .words b { display: block; font-size: calc(13.5px * var(--s)); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.album-song .words span { display: block; margin-top: calc(2px * var(--s)); font-size: calc(11.5px * var(--s)); color: rgba(255, 255, 255, 0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.album-song .time { flex: none; font-size: calc(11.5px * var(--s)); color: rgba(255, 255, 255, 0.45); font-variant-numeric: tabular-nums; }
+/* The song playing stands out of the list as a slab of glass, its cover's side turned toward you, glowing in its colors. */
+/* The song playing stands out as a lens of glass: shared/playing-glass.js (PlayingGlass.swift). */
+.album-song.ghost { animation: pulse 1.8s ease-in-out infinite; animation-delay: calc(var(--i) * 80ms); pointer-events: none; }
+.album-song.ghost .cover, .album-song.ghost .words b, .album-song.ghost .words span, .album-song.ghost .time { background: rgba(255, 255, 255, 0.08); border-radius: 3px; color: transparent; }
+.album-song.ghost .words b { width: 55%; height: calc(11px * var(--s)); } .album-song.ghost .words span { width: 35%; height: calc(9px * var(--s)); }
+.album-song.ghost .time { width: calc(28px * var(--s)); height: calc(10px * var(--s)); }
+.album-note { height: 100%; display: grid; place-items: center; font-size: calc(13px * var(--s)); font-weight: 500; color: rgba(255, 255, 255, 0.55); }
+
+/* ---- the user's lists (PlaylistShelf): the search grid's look, its own place ---- */
+#lists { position: absolute; z-index: 20; left: 50%; top: calc(40px * var(--s)); width: var(--bar-width); height: var(--carousel-height); transform: translateX(-50%);
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1); }
+#lists.hidden { opacity: 0; transform: translateX(-50%) translateY(calc(10px * var(--s))) scale(0.98); pointer-events: none; }
+#lists .glass { position: absolute; inset: 0; border-radius: calc(24px * var(--s)); background: rgba(16, 16, 20, calc(0.5 + 0.15 * var(--glass)));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 calc(12px * var(--s)) calc(36px * var(--s)) rgba(0, 0, 0, 0.35); backdrop-filter: blur(28px) saturate(1.3); }
+#lists .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; border-radius: calc(24px * var(--s)); scrollbar-width: none; }
+#lists .scroll::-webkit-scrollbar { display: none; }
+#lists .content { position: relative; width: 100%; }
+#lists .section { position: absolute; font-size: calc(13px * var(--s)); font-weight: 700; color: rgba(255, 255, 255, 0.9); letter-spacing: 0.01em; }
+#lists .lists-note { position: absolute; font-size: calc(13px * var(--s)); font-weight: 500; color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#lists .lists-close { position: absolute; top: calc(14px * var(--s)); right: calc(16px * var(--s)); width: calc(26px * var(--s)); height: calc(26px * var(--s));
+  border: 0; padding: 0; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, 0.1); transition: background 0.15s; z-index: 2; }
+#lists .lists-close:hover { background: rgba(255, 255, 255, 0.2); }
+#lists .lists-close svg { width: 44%; height: 44%; stroke: rgba(255, 255, 255, 0.8); stroke-width: 3; stroke-linecap: round; fill: none; }
+#lists .symbol { position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit; }
+#lists .symbol svg { width: 42%; height: 42%; }
+#lists .result.tile .art { overflow: hidden; transition: transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1), box-shadow 0.3s; }
+#lists .result.lit .art { transform: scale(1.05) translateY(calc(-2px * var(--s))); box-shadow: 0 calc(9px * var(--s)) calc(18px * var(--s)) rgba(0, 0, 0, 0.4); }
+/* The list the playlist shows glows. */
+#lists .result.shown-list .art { box-shadow: 0 0 0 calc(2px * var(--s)) rgba(255, 255, 255, 0.85),
+  calc(-6px * var(--s)) 0 calc(22px * var(--s)) var(--glow, rgba(255, 255, 255, 0.35)), calc(6px * var(--s)) 0 calc(22px * var(--s)) var(--glow2, rgba(255, 255, 255, 0.3)); }

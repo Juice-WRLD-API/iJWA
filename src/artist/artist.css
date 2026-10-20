@@ -1,0 +1,109 @@
+/* An artist's page (ArtistWindow.swift): dark glass lit by the colors of the artist's photo. Every size is the design's
+   size times --s, the player's own scale. */
+:root { --s: 1; color-scheme: dark; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; user-select: none; -webkit-user-select: none;
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; color: #fff; -webkit-font-smoothing: antialiased; }
+button { background: none; border: none; color: inherit; font: inherit; cursor: default; outline: none; }
+
+#page { position: absolute; inset: calc(10px * var(--s)); border-radius: calc(30px * var(--s)); overflow: hidden; background: rgba(16, 16, 20, 0.93);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.13), 0 calc(14px * var(--s)) calc(40px * var(--s)) rgba(0, 0, 0, 0.5);
+  animation: rise 0.38s cubic-bezier(0.2, 0.9, 0.25, 1); }
+@keyframes rise { from { opacity: 0; transform: translateY(calc(16px * var(--s))) scale(0.97); } }
+#page.leaving { animation: sink 0.24s cubic-bezier(0.4, 0, 0.8, 0.6) forwards; }
+@keyframes sink { to { opacity: 0; transform: translateY(calc(10px * var(--s))); } }
+/* The photo's colors, as light falling on the glass from either side. */
+#wash { position: absolute; inset: 0; pointer-events: none; transition: opacity 0.7s; opacity: 0; }
+#wash.lit { opacity: 1; }
+#content { position: absolute; inset: 0; display: flex; gap: calc(30px * var(--s)); padding: calc(30px * var(--s)) calc(18px * var(--s)) 0 calc(30px * var(--s));
+  transition: opacity 0.3s; }
+#content.changing { opacity: 0; }
+
+/* The left: the photo in its own glow, the name, a line about the artist, Play and Shuffle — each in a place kept for it. */
+#header { width: calc(224px * var(--s)); flex: none; display: flex; flex-direction: column; }
+#photo { width: calc(224px * var(--s)); height: calc(224px * var(--s)); border-radius: calc(24px * var(--s)); overflow: hidden; background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 calc(12px * var(--s)) calc(26px * var(--s)) var(--glow, rgba(0, 0, 0, 0.4)); transition: box-shadow 0.6s; }
+#photo img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity 0.4s; }
+#photo img.shown { opacity: 1; }
+#name { font-size: calc(26px * var(--s)); font-weight: 700; line-height: 1.15; margin-top: calc(18px * var(--s)); display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+#bio { font-size: calc(12px * var(--s)); font-weight: 500; color: rgba(255, 255, 255, 0.58); line-height: 1.25; height: calc(45px * var(--s)); margin-top: calc(5px * var(--s));
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; transition: opacity 0.35s; }
+#buttons { display: flex; gap: calc(10px * var(--s)); margin-top: calc(12px * var(--s)); transition: opacity 0.3s; }
+#buttons.waiting { opacity: 0.4; pointer-events: none; }
+.pill { display: flex; align-items: center; gap: calc(7px * var(--s)); height: calc(36px * var(--s)); padding: 0 calc(18px * var(--s)); border-radius: 999px;
+  font-size: calc(13px * var(--s)); font-weight: 600; background: rgba(255, 255, 255, 0.12); transition: background 0.15s, transform 0.2s cubic-bezier(0.3, 1.4, 0.5, 1); }
+.pill:hover { background: rgba(255, 255, 255, 0.2); }
+.pill:active { transform: scale(0.94); }
+.pill.filled { background: rgba(255, 255, 255, 0.92); color: #000; }
+.pill.filled:hover { background: #fff; }
+.pill .glyph { width: calc(12px * var(--s)); height: calc(12px * var(--s)); display: grid; }
+.pill .glyph svg { width: 100%; height: 100%; }
+
+/* The right, scrolling: top songs, albums, artists like this one. */
+#music { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(8px * var(--s)); }
+h2 { font-size: calc(18px * var(--s)); font-weight: 700; padding-left: calc(22px * var(--s)); }
+#list { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 3%, #000 90%, transparent 100%); }
+#list::-webkit-scrollbar { display: none; }
+#rows { padding: calc(6px * var(--s)) calc(12px * var(--s)) calc(26px * var(--s)); display: flex; flex-direction: column; gap: calc(2px * var(--s)); }
+.note { font-size: calc(13px * var(--s)); font-weight: 500; color: rgba(255, 255, 255, 0.55); padding: calc(10px * var(--s)) calc(10px * var(--s)); }
+.arrive { animation: arrive 0.45s cubic-bezier(0.2, 0.9, 0.3, 1) backwards; }
+@keyframes arrive { from { opacity: 0; transform: translateY(calc(8px * var(--s))); } }
+
+.song { display: flex; align-items: center; gap: calc(12px * var(--s)); height: calc(52px * var(--s)); padding: 0 calc(10px * var(--s)); border-radius: calc(12px * var(--s));
+  text-align: left; transition: background 0.15s, opacity 0.4s, transform 0.15s; width: 100%; }
+.song:hover { background: rgba(255, 255, 255, 0.09); }
+.song:active { transform: scale(0.985); }
+.song .cover { position: relative; width: calc(40px * var(--s)); height: calc(40px * var(--s)); flex: none; border-radius: calc(7px * var(--s)); overflow: hidden; background: rgba(255, 255, 255, 0.06); }
+.song .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.song .cover .over { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, 0.42); opacity: 0; transition: opacity 0.15s; }
+.song .cover .over svg { width: 38%; height: 38%; }
+.song:hover .cover .over, .song.pending .cover .over, .song.playing .cover .over { opacity: 1; }
+.song .words { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: calc(2px * var(--s)); }
+.song .words b { font-size: calc(13.5px * var(--s)); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: calc(5px * var(--s)); }
+.song .words b .t { overflow: hidden; text-overflow: ellipsis; }
+.song .words span { font-size: calc(11.5px * var(--s)); color: rgba(255, 255, 255, 0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.song .time { font-size: calc(11.5px * var(--s)); color: rgba(255, 255, 255, 0.45); font-variant-numeric: tabular-nums; }
+.explicit { flex: none; font-size: calc(8.5px * var(--s)); font-weight: 700; width: calc(13px * var(--s)); height: calc(13px * var(--s)); border-radius: calc(3px * var(--s));
+  display: grid; place-items: center; background: rgba(255, 255, 255, 0.28); color: rgba(0, 0, 0, 0.8); }
+/* The others step back a little while a song plays. */
+#rows.has-playing .song:not(.playing):not(:hover) { opacity: 0.45; }
+/* The song playing stands out as a lens of glass: shared/playing-glass.js (PlayingGlass.swift). */
+.ghost { display: flex; align-items: center; gap: calc(12px * var(--s)); height: calc(52px * var(--s)); padding: 0 calc(10px * var(--s)); animation: breathe 0.85s ease-in-out infinite alternate; }
+.ghost i { display: block; background: rgba(255, 255, 255, 0.08); border-radius: 99px; }
+.ghost .c { width: calc(40px * var(--s)); height: calc(40px * var(--s)); border-radius: calc(7px * var(--s)); }
+@keyframes breathe { to { opacity: 0.45; } }
+
+.section { font-size: calc(18px * var(--s)); font-weight: 700; padding: calc(20px * var(--s)) 0 calc(6px * var(--s)) calc(10px * var(--s)); }
+.albums { display: grid; grid-template-columns: repeat(4, calc(116px * var(--s))); gap: calc(14px * var(--s)) calc(16px * var(--s)); padding: 0 calc(10px * var(--s)); }
+.album { display: flex; flex-direction: column; gap: calc(6px * var(--s)); width: calc(116px * var(--s)); text-align: left; }
+.album .art { position: relative; width: calc(116px * var(--s)); height: calc(116px * var(--s)); border-radius: calc(10px * var(--s)); background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 calc(5px * var(--s)) calc(8px * var(--s)) rgba(0, 0, 0, 0.25); transition: transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1), box-shadow 0.3s; }
+.album .art img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
+.album .disc { position: absolute; right: calc(7px * var(--s)); bottom: calc(7px * var(--s)); width: calc(28px * var(--s)); height: calc(28px * var(--s)); border-radius: 50%;
+  background: rgba(255, 255, 255, 0.94); color: rgba(0, 0, 0, 0.85); display: grid; place-items: center; opacity: 0; transform: scale(0.7); transition: opacity 0.2s, transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1); }
+.album .disc svg { width: 42%; height: 42%; margin-left: 8%; }
+.album:hover .art { transform: scale(1.05); box-shadow: 0 calc(8px * var(--s)) calc(16px * var(--s)) rgba(0, 0, 0, 0.45); }
+.album:hover .disc, .album.pending .disc { opacity: 1; transform: scale(1); }
+.album b { font-size: calc(12px * var(--s)); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.album span { font-size: calc(11px * var(--s)); color: rgba(255, 255, 255, 0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: calc(-4px * var(--s)); }
+.similar { display: flex; gap: calc(14px * var(--s)); padding: 0 calc(10px * var(--s)); }
+.bubble { display: flex; flex-direction: column; align-items: center; gap: calc(7px * var(--s)); width: calc(92px * var(--s)); }
+.bubble .art { width: calc(84px * var(--s)); height: calc(84px * var(--s)); border-radius: 50%; overflow: hidden; background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 calc(5px * var(--s)) calc(8px * var(--s)) rgba(0, 0, 0, 0.3); transition: transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1); }
+.bubble .art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bubble b { font-size: calc(11.5px * var(--s)); font-weight: 600; color: rgba(255, 255, 255, 0.8); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bubble:hover .art { transform: scale(1.06); }
+.bubble:hover b { color: #fff; }
+.spinner { width: 40%; height: 40%; border-radius: 50%; border: calc(2px * var(--s)) solid rgba(255, 255, 255, 0.25); border-top-color: #fff; animation: turn 0.75s linear infinite; }
+.album .disc .spinner { border-color: rgba(0, 0, 0, 0.2); border-top-color: #000; }
+@keyframes turn { to { transform: rotate(360deg); } }
+
+#close { position: absolute; top: calc(16px * var(--s)); right: calc(16px * var(--s)); width: calc(30px * var(--s)); height: calc(30px * var(--s)); border-radius: 50%;
+  display: grid; place-items: center; background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.8); transition: background 0.15s, transform 0.2s; }
+#close:hover { background: rgba(255, 255, 255, 0.18); color: #fff; }
+#close:active { transform: scale(0.9); }
+#close svg { width: 42%; height: 42%; }
+img.fade { opacity: 0; transition: opacity 0.3s; }
+img.fade.shown { opacity: 1; }
