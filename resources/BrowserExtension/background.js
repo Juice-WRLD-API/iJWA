@@ -6,7 +6,6 @@
 import { pageAction, pageSong } from './page.js';
 import { pageLists } from './lists.js';
 import { pageQueue } from './queue.js';
-import { pageAudio } from './audio.js';
 
 const PORTS = [47823, 47824];
 const SITES = [
@@ -146,9 +145,6 @@ async function handle(m) {
     // true or false sets it, none asks.
     case 'like':
       return { ok: true, ...((await inPage(m.tab, pageLists, [m.site, typeof m.on === 'boolean' ? { what: 'like', id: m.song, on: m.on } : { what: 'liked', id: m.song }])) || { error: 'no answer' }) };
-    // The song playing's sound, for timing its words (audio.js): prepared, then taken in pieces.
-    case 'audio':
-      return { ok: true, ...((await inPage(m.tab, pageAudio, [m.site, { what: m.what, from: m.from, count: m.count }])) || { error: 'no answer' }) };
     // The song asked for comes as `item`: a message's own `id` is the number its answer is matched by.
     case 'queue':
       return { ok: true, ...((await inPage(m.tab, pageQueue, [m.site, { what: m.what || 'read', id: m.item, song: m.song, next: m.next }])) || { error: 'no answer' }) };

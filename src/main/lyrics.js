@@ -180,12 +180,9 @@ async function lookup(track) {
   return { status: answered ? 'none' : 'failed' };
 }
 
-/** { status: 'found' | 'none' | 'failed', lyrics? }. Words timed on this computer from the song itself
- *  (syncedlyrics.js) come before all; then words chosen by hand for this song; a song no source has words for gets
- *  Genius's, which has many unreleased songs' (LyricsFinder.find). */
+/** { status: 'found' | 'none' | 'failed', lyrics? }. Words chosen by hand for this song come first; a song no source
+ *  has words for gets Genius's, which has many unreleased songs' (LyricsFinder.find). */
 async function findLyrics(track) {
-  const timed = require('./syncedlyrics').lyrics(track);
-  if (timed) return { status: 'found', lyrics: timed };
   const genius = require('./genius');
   if (genius.picks.url(track)) return genius.find(track);
   const found = await findTimed(track);

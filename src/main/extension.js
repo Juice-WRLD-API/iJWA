@@ -306,30 +306,6 @@ class BrowserExtension extends EventEmitter {
     return typeof answer.liked === 'boolean' ? answer.liked : null;
   }
 
-  /** The sound of the song the page followed plays, 16 kHz mono 16-bit samples, fetched and decoded in the page
-   *  (audio.js) and taken in pieces under the socket's 16 MB: { samples: Buffer } or { why } when it couldn't be had. */
-  async audio(place = this.followed) {
-    if (!place) return { why: 'no page plays' };
-    const base = { do: 'audio', tab: place.tab, site: place.site };
-    const ready = await this.ask(place.browser, { ...base, what: 'prepare' }, 90000);
-    if (!ready) return { why: "the page didn't answer" };
-    const count = ready.samples;
-    if (!(count > 0)) return { why: ready.error || 'no sound' };
-    const pieces = [];
-    const piece = 1500000;
-    for (let from = 0; from < count; from += piece) {
-      const answer = await this.ask(place.browser, { ...base, what: 'chunk', from, count: piece }, 30000);
-      if (!answer || typeof answer.data !== 'string') {
-        await this.ask(place.browser, { ...base, what: 'clear' });
-        return { why: 'a piece was lost' };
-      }
-      pieces.push(Buffer.from(answer.data, 'base64'));
-    }
-    await this.ask(place.browser, { ...base, what: 'clear' });
-    log(`sound of the song from ${place.site}: ${(count / 16000).toFixed(1)} s`);
-    return { samples: Buffer.concat(pieces) };
-  }
-
   // ---- the page's queue (BrowserExtension.queue, playInQueue, removeFromQueue, addToQueue; queue.js, 2026-10-12) ----
   // A queue's song goes as "item": the extension's answer carries the ask's "id", which is the question's serial.
 
