@@ -5,6 +5,7 @@
   "description": "iJWA for Windows: light around your screen that moves with the music",
   "main": "src/main/main.js",
   "private": true,
+  "license": "MIT",
   "author": "YoMilly",
   "scripts": {
     "start": "npx --yes electron@44.7.0 .",
