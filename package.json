@@ -1,7 +1,7 @@
 {
   "name": "ijwa-windows",
   "productName": "iJWA",
-  "version": "1.9.1",
+  "version": "0.1.0",
   "description": "iJWA for Windows: light around your screen that moves with the music",
   "main": "src/main/main.js",
   "private": true,
@@ -13,5 +13,52 @@
   },
   "dependencies": {
     "electron-updater": "^6.8.9"
+  },
+  "build": {
+    "appId": "com.ijwa.windows",
+    "productName": "iJWA",
+    "electronVersion": "44.7.0",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "package.json",
+      "src/**/*",
+      "resources/**/*"
+    ],
+    "asarUnpack": [
+      "resources/**",
+      "**/*.ps1"
+    ],
+    "artifactName": "iJWA-${version}-${os}-${arch}.${ext}",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Juice-WRLD-API",
+        "repo": "iJWA"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "resources/app-icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "deleteAppDataOnUninstall": false
+    }
   }
 }

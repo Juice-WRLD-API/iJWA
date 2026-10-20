@@ -22,8 +22,7 @@ body.leaving #card { transition: opacity 0.22s, transform 0.22s; opacity: 0; tra
   transition: opacity 0.35s, transform 0.5s cubic-bezier(0.3, 1.1, 0.5, 1); }
 .page.before { opacity: 0; transform: translateX(-40px); }
 .page.after { opacity: 0; transform: translateX(40px); }
-/* Only the page shown takes clicks: the ones waiting before and after it lie over it, unseen, and took them — "Get
-   iJWA" and the key's box did nothing (a friend's PC, 2026-10-09). */
+/* Only the page shown takes clicks: the ones waiting before and after it lie over it, unseen, and took them */
 .page.before, .page.after { pointer-events: none; }
 .glow { position: relative; height: 110px; width: 160px; display: grid; place-items: center; }
 .glow::before { content: ''; position: absolute; width: 160px; height: 160px; left: 0; top: -25px; border-radius: 50%; filter: blur(14px);
@@ -42,16 +41,3 @@ p { font-size: 14px; color: rgba(255, 255, 255, 0.62); max-width: 380px; }
 #next:active { transform: scale(0.98); }
 #next:disabled { filter: saturate(0.6) brightness(0.85); }
 
-/* The key page. */
-#dots.hidden { visibility: hidden; }
-.page.key { gap: 12px; }
-.page.key .glow { height: 96px; }
-#key { width: 100%; max-width: 360px; height: 40px; margin-top: 6px; padding: 0 14px; border-radius: 10px; outline: none; text-align: center;
-  font: 500 14px/1 "Cascadia Mono", Consolas, "Segoe UI", monospace; letter-spacing: 0.02em; color: #fff; user-select: text; -webkit-user-select: text;
-  background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.12); transition: border-color 0.15s, background 0.15s; }
-#key:focus { border-color: rgba(250, 140, 102, 0.75); background: rgba(255, 255, 255, 0.09); }
-#key::placeholder { color: rgba(255, 255, 255, 0.35); font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif; letter-spacing: 0; }
-.failure { min-height: 19px; font-size: 13px; color: rgb(255, 150, 130); }
-.store { font-size: 13px; }
-.store a { color: rgb(255, 176, 140); cursor: pointer; }
-.store a:hover { text-decoration: underline; }

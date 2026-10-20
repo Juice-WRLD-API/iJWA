@@ -1,0 +1,50 @@
+name: Build and release
+
+# Every push to main builds iJWA and publishes a release: 0.1.0 for the first run, then 0.1.1, 0.1.2, ...
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Work out the version
+        id: version
+        shell: bash
+        run: |
+          echo "value=0.1.$((GITHUB_RUN_NUMBER - 1))" >> "$GITHUB_OUTPUT"
+
+      - name: Stamp the version into package.json
+        shell: bash
+        run: |
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.version='${{ steps.version.outputs.value }}';fs.writeFileSync('package.json',JSON.stringify(p,null,2))"
+
+      - name: Build the installer
+        run: npx --yes electron-builder@26.0.12 --win --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Publish the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          v='${{ steps.version.outputs.value }}'
+          # latest.yml and the .blockmap are what the in-app updater reads.
+          gh release create "v$v" release/*.exe release/*.exe.blockmap release/*.zip release/latest.yml \
+            --target "$GITHUB_SHA" --title "iJWA $v" --generate-notes
