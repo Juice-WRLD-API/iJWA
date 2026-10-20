@@ -4,7 +4,7 @@
 // from inside its page — the PlayerAPI its own play buttons use, its own search page — it plays with nothing shown and
 // nothing coming forward (measured on the Mac the same day: search 38 ms, Spotify hidden throughout). The page is
 // reached through Chromium's debugging port, which Spotify opens when started with --remote-debugging-port: on this
-// computer only, and no web page can use it (Chromium turns away any page's origin). iBaila starts Spotify so,
+// computer only, and no web page can use it (Chromium turns away any page's origin). iJWA starts Spotify so,
 // minimized (--minimized, as Spotify's own start with Windows: no window); one the user started is started again so,
 // once, the first time a song is picked.
 const fs = require('fs');
@@ -46,7 +46,7 @@ async function evaluate(expression, ms = 8000) {
 // Finds Spotify's platform and PlayerAPI once and keeps them on the page: the app's root holds its platform, whose
 // registry holds the player its own play buttons use.
 const FIND = `
-window.__ibailaInside = window.__ibailaInside || (() => {
+window.__ijwaInside = window.__ijwaInside || (() => {
   let found = null;
   return () => {
     if (found) return found;
@@ -100,7 +100,7 @@ function spotifyPlays() {
 }
 
 async function playerFound() {
-  return (await evaluate(`${FIND}; window.__ibailaInside() ? 'found' : 'no'`, 2000)) === 'found';
+  return (await evaluate(`${FIND}; window.__ijwaInside() ? 'found' : 'no'`, 2000)) === 'found';
 }
 
 let readying = null;
@@ -136,10 +136,10 @@ async function ready(restarting = 'always') {
 async function play(uri, context = null) {
   if (!(await ready())) return 'unreachable';
   const call = context
-    ? `inside.player.play({ uri: ${JSON.stringify(context)} }, { featureIdentifier: 'ibaila' }, { skipTo: { uri: ${JSON.stringify(uri)} } })`
-    : `inside.player.play({ uri: ${JSON.stringify(uri)} }, { featureIdentifier: 'ibaila' }, {})`;
+    ? `inside.player.play({ uri: ${JSON.stringify(context)} }, { featureIdentifier: 'ijwa' }, { skipTo: { uri: ${JSON.stringify(uri)} } })`
+    : `inside.player.play({ uri: ${JSON.stringify(uri)} }, { featureIdentifier: 'ijwa' }, {})`;
   const answer = await evaluate(`${FIND};
-    (async () => { const inside = window.__ibailaInside(); if (!inside) return 'no player'; await ${call}; return 'played'; })()`);
+    (async () => { const inside = window.__ijwaInside(); if (!inside) return 'no player'; await ${call}; return 'played'; })()`);
   log('played', uri, 'in', context || 'nothing', '→', answer ?? 'no answer');
   return answer === 'played' ? 'played' : 'refused';
 }
@@ -153,20 +153,20 @@ async function search(kind, title, artist = '') {
   if (!(await ready())) return null;
   const answer = await evaluate(`${FIND};
     (async () => {
-      const inside = window.__ibailaInside();
+      const inside = window.__ijwaInside();
       if (!inside) return null;
-      if (!window.__ibailaSearchHash) {
+      if (!window.__ijwaSearchHash) {
         const code = await (await fetch('https://xpui.app.spotify.com/xpui-routes-search.js')).text();
-        window.__ibailaSearchHash = (code.match(/"searchDesktop","query","([0-9a-f]{64})"/) || [])[1] || null;
+        window.__ijwaSearchHash = (code.match(/"searchDesktop","query","([0-9a-f]{64})"/) || [])[1] || null;
       }
-      if (!window.__ibailaSearchHash) return null;
+      if (!window.__ijwaSearchHash) return null;
       const kind = ${JSON.stringify(kind)};
       const title = ${JSON.stringify(String(title || ''))}.replace(/\\s+-\\s+(single|ep)$/i, '');
       const lead = ${JSON.stringify(String(artist || ''))}.split(/\\s*(?:,|&|\\bfeat\\.?|\\bft\\.?|\\bx\\b|\\bwith\\b)\\s*/i)[0];
       const plain = (text) => String(text || '').toLowerCase().replace(/\\s*[([].*?[)\\]]/g, '').replace(/[^\\p{L}\\p{N}]+/gu, ' ').trim();
       const want = plain(title), who = plain(lead);
       const load = inside.platform.getGraphQLLoader();
-      const result = await load({ name: 'searchDesktop', operation: 'query', sha256Hash: window.__ibailaSearchHash, value: null }, {
+      const result = await load({ name: 'searchDesktop', operation: 'query', sha256Hash: window.__ijwaSearchHash, value: null }, {
         searchTerm: kind === 'artist' ? title : (title + ' ' + lead).trim(), offset: 0, limit: 10, numberOfTopResults: 5,
         includeAudiobooks: false, includeArtistHasConcertsField: false, includePreReleases: false,
         includeLocalConcertsField: false, includeAuthors: false });
@@ -201,7 +201,7 @@ async function queue() {
   if (!(await ready('whenSilent'))) return null;
   const text = await evaluate(`${FIND};
     (async () => {
-      const inside = window.__ibailaInside();
+      const inside = window.__ijwaInside();
       if (!inside) return null;
       const platform = inside.platform;
       const api = (name) => { let key = null; platform.getRegistry()._map.forEach((v, k) => { if (k.description === name) key = k; }); return platform.getRegistry().resolve(key); };
@@ -228,7 +228,7 @@ async function skipTo(id) {
   if (parts.length !== 2 || !(await playerFound())) return false;
   const answer = await evaluate(`${FIND};
     (async () => {
-      const inside = window.__ibailaInside();
+      const inside = window.__ijwaInside();
       if (!inside) return null;
       const platform = inside.platform;
       let key = null; platform.getRegistry()._map.forEach((v, k) => { if (k.description === 'PlayerAPI') key = k; });
@@ -258,7 +258,7 @@ async function player(call) {
   if (!(await playerFound())) return false;
   const answer = await evaluate(`${FIND};
     (async () => {
-      const inside = window.__ibailaInside();
+      const inside = window.__ijwaInside();
       if (!inside) return null;
       const platform = inside.platform;
       let key = null; platform.getRegistry()._map.forEach((v, k) => { if (k.description === 'PlayerAPI') key = k; });
@@ -282,7 +282,7 @@ async function library() {
   if (!(await ready('whenSilent'))) return null;
   const text = await evaluate(`${FIND};
     (async () => {
-      const inside = window.__ibailaInside();
+      const inside = window.__ijwaInside();
       if (!inside) return null;
       const platform = inside.platform;
       const api = (name) => { let key = null; platform.getRegistry()._map.forEach((v, k) => { if (k.description === name) key = k; }); return platform.getRegistry().resolve(key); };
@@ -309,7 +309,7 @@ async function songs(list) {
   if (!(await ready('whenSilent'))) return null;
   const text = await evaluate(`${FIND};
     (async () => {
-      const inside = window.__ibailaInside();
+      const inside = window.__ijwaInside();
       if (!inside) return null;
       const platform = inside.platform;
       const api = (name) => { let key = null; platform.getRegistry()._map.forEach((v, k) => { if (k.description === name) key = k; }); return platform.getRegistry().resolve(key); };

@@ -26,7 +26,7 @@ async function findAppleLyrics(track) {
     let response;
     try {
       response = await fetch(`https://lyrics-api.boidu.dev/getLyrics?${params.toString().replace(/\+/g, '%20')}`,
-        { headers: { 'User-Agent': 'iBaila/1.0 (Windows)' }, signal: AbortSignal.timeout(8000) });
+        { headers: { 'User-Agent': 'iJWA/1.0 (Windows)' }, signal: AbortSignal.timeout(8000) });
     } catch { return { status: 'failed' }; }
     if (response.status === 200) {
       try {

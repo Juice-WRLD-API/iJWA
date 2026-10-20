@@ -1,6 +1,6 @@
-// The app's pages are served from ibaila://app/, not from file://: module scripts and audio worklets need a real
-// origin. Saved song artwork is served from ibaila://app/artwork/ and covers from the web from ibaila://app/cover/,
-// the same origin, so pages can read their colors; the wallpaper's frost is ibaila://app/frost.jpg.
+// The app's pages are served from ijwa://app/, not from file://: module scripts and audio worklets need a real
+// origin. Saved song artwork is served from ijwa://app/artwork/ and covers from the web from ijwa://app/cover/,
+// the same origin, so pages can read their colors; the wallpaper's frost is ijwa://app/frost.jpg.
 const { protocol, net } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -14,12 +14,12 @@ const root = path.join(__dirname, '..');
 
 function registerScheme() {
   protocol.registerSchemesAsPrivileged([
-    { scheme: 'ibaila', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } },
+    { scheme: 'ijwa', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } },
   ]);
 }
 
 function handle() {
-  protocol.handle('ibaila', (request) => {
+  protocol.handle('ijwa', (request) => {
     const url = new URL(request.url);
     if (url.pathname.startsWith('/artwork/')) {
       return net.fetch(pathToFileURL(artwork.file(decodeURIComponent(url.pathname.slice('/artwork/'.length)))).toString());

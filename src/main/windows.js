@@ -1,4 +1,4 @@
-// What every window of iBaila's own on the desktop shares, on Windows: a tool window, so it has no taskbar button,
+// What every window of iJWA's own on the desktop shares, on Windows: a tool window, so it has no taskbar button,
 // stays out of Alt+Tab and Task View, and the app shows up once — as the icon by the clock — not as five windows.
 const { BrowserWindow } = require('electron');
 
@@ -15,7 +15,7 @@ let count = 0;
 const asked = new Map(); // window name → { options, made, cancelled }
 
 function startHost() {
-  host = new BrowserWindow({ ...TOOL, show: false, title: 'iBaila', webPreferences: { contextIsolation: true, backgroundThrottling: false } });
+  host = new BrowserWindow({ ...TOOL, show: false, title: 'iJWA', webPreferences: { contextIsolation: true, backgroundThrottling: false } });
   host.webContents.setWindowOpenHandler(({ frameName }) => {
     const one = asked.get(frameName);
     return one ? { action: 'allow', overrideBrowserWindowOptions: one.options } : { action: 'deny' };
@@ -27,7 +27,7 @@ function startHost() {
     if (one.cancelled) win.destroy(); else one.made(win);
   });
   host.webContents.on('render-process-gone', (_e, details) => console.error('[windows] the shared process ended:', details.reason));
-  hostReady = host.loadURL('ibaila://app/shared/host.html').catch((error) => console.error('[windows] host:', error.message));
+  hostReady = host.loadURL('ijwa://app/shared/host.html').catch((error) => console.error('[windows] host:', error.message));
 }
 
 /** Opens `url` in a new window made with `options`, in the shared process; `made(window)` once it's there. Returns a

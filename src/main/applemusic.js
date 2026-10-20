@@ -1,5 +1,5 @@
 // Apple Music's own search results and artist pages, as music.apple.com hands them to a browser
-// (AppleMusicWeb.swift). The page carries everything it shows as JSON, and iBaila reads that instead of the page:
+// (AppleMusicWeb.swift). The page carries everything it shows as JSON, and iJWA reads that instead of the page:
 // no key, no permission, one request of about 60 KB. Should Apple change the page, reading fails quietly.
 const STOREFRONT = 'us'; // America's store has the most, music videos especially (checked on the Mac, 2026-09-24)
 

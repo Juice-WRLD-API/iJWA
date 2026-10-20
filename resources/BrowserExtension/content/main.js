@@ -1,4 +1,4 @@
-// Inside YouTube Music's, SoundCloud's and Spotify's Web Player's pages, in their own world: what plays, told to iBaila through the extension
+// Inside YouTube Music's, SoundCloud's and Spotify's Web Player's pages, in their own world: what plays, told to iJWA through the extension
 // (bridge.js passes it on) — the song the page names (its media session, what it gives the computer's Now Playing),
 // where it is, whether it plays, and whether it is an ad. Told when it changes, and now and then while it plays.
 // It keeps hold of the page's player too, for page.js: the audio SoundCloud never puts in the page, and the page's own
@@ -10,29 +10,29 @@
 // reloading for each new version before (2026-10-10).
 (() => {
   const me = {};
-  window.__ibailaOnDuty = me;
-  const onDuty = () => window.__ibailaOnDuty === me;
+  window.__ijwaOnDuty = me;
+  const onDuty = () => window.__ijwaOnDuty === me;
   const site = /(^|\.)soundcloud\.com$/.test(location.hostname) ? 'soundCloud' : location.hostname === 'open.spotify.com' ? 'spotifyWeb' : 'youTubeMusic';
 
   // The page's own hooks, once: its answers to the media keys as it hands them to the browser (kept for every copy),
   // and its player, told to play — SoundCloud plays from an audio element never put in the page.
-  if (!window.__ibailaHooked) {
-    window.__ibailaHooked = true;
-    window.__ibailaActions = window.__ibailaActions || {};
+  if (!window.__ijwaHooked) {
+    window.__ijwaHooked = true;
+    window.__ijwaActions = window.__ijwaActions || {};
     if (window.MediaSession) {
       const set = MediaSession.prototype.setActionHandler;
       MediaSession.prototype.setActionHandler = function (action, handler) {
-        window.__ibailaActions[action] = handler;
+        window.__ijwaActions[action] = handler;
         return set.call(this, action, handler);
       };
     }
     const play = HTMLMediaElement.prototype.play;
     HTMLMediaElement.prototype.play = function (...args) {
-      if (window.__ibailaHold) window.__ibailaHold(this);
+      if (window.__ijwaHold) window.__ijwaHold(this);
       return play.apply(this, args);
     };
     document.addEventListener('play', (event) => {
-      if (event.target instanceof HTMLMediaElement && window.__ibailaHold) window.__ibailaHold(event.target, true);
+      if (event.target instanceof HTMLMediaElement && window.__ijwaHold) window.__ijwaHold(event.target, true);
     }, true);
   }
 
@@ -40,12 +40,12 @@
   // SoundCloud's app key and the user's — what reading the user's lists takes (lists.js). Nothing else is kept, and
   // nothing leaves the page. Set apart from the hooks above, so pages hooked by an older copy gain it too. A frame of
   // the site's own (SoundCloud's 2025 pages) keeps what it hears in the page's top window.
-  if (!window.__ibailaListening && site !== 'youTubeMusic') {
-    window.__ibailaListening = true;
+  if (!window.__ijwaListening && site !== 'youTubeMusic') {
+    window.__ijwaListening = true;
     let top = window;
     try { if (window.top.location.host === location.host) top = window.top; } catch (e) {}
-    const heard = (top.__ibailaHeard = top.__ibailaHeard || {});
-    const told = () => { top.__ibailaHeardWaiters = (top.__ibailaHeardWaiters || []).filter((check) => !check()); };
+    const heard = (top.__ijwaHeard = top.__ijwaHeard || {});
+    const told = () => { top.__ijwaHeardWaiters = (top.__ijwaHeardWaiters || []).filter((check) => !check()); };
     const plain = (headers) => {
       if (!headers) return {};
       if (headers instanceof Headers) return Object.fromEntries(headers.entries());
@@ -89,12 +89,12 @@
     const opened = XMLHttpRequest.prototype.open;
     const setHeader = XMLHttpRequest.prototype.setRequestHeader;
     XMLHttpRequest.prototype.open = function (method, url) {
-      this.__ibailaUrl = url;
+      this.__ijwaUrl = url;
       try { note(url, {}, null); } catch (e) {}
       return opened.apply(this, arguments);
     };
     XMLHttpRequest.prototype.setRequestHeader = function (name, value) {
-      try { if (/^authorization$/i.test(name)) note(this.__ibailaUrl, { authorization: value }, null); } catch (e) {}
+      try { if (/^authorization$/i.test(name)) note(this.__ijwaUrl, { authorization: value }, null); } catch (e) {}
       return setHeader.apply(this, arguments);
     };
   }
@@ -106,17 +106,17 @@
   const hold = (element) => {
     if (!element || element === media) return;
     media = element;
-    window.__ibailaMedia = element;
-    // The loudness iBaila set, kept from one song's player to the next.
-    if (window.__ibailaVolume != null) element.volume = window.__ibailaVolume;
+    window.__ijwaMedia = element;
+    // The loudness iJWA set, kept from one song's player to the next.
+    if (window.__ijwaVolume != null) element.volume = window.__ijwaVolume;
     for (const name of events) element.addEventListener(name, heard);
     settle();
   };
-  window.__ibailaHold = (element, started) => { if (!onDuty()) return; hold(element); if (started) soon(); };
+  window.__ijwaHold = (element, started) => { if (!onDuty()) return; hold(element); if (started) soon(); };
 
-  // The loudness last chosen on this site — iBaila's slider or the page's own — kept by the extension (bridge.js
+  // The loudness last chosen on this site — iJWA's slider or the page's own — kept by the extension (bridge.js
   // hands it over as the page opens) and given to the page's player once it has one: YouTube's own memory didn't keep
-  // what iBaila set, and a song or site later the page was back at its old loudness (2026-10-09). Given, it is held a
+  // what iJWA set, and a song or site later the page was back at its old loudness (2026-10-09). Given, it is held a
   // few seconds — YouTube's player sets its own remembered loudness as it gets ready, over ours — and the page's
   // loudness isn't told meanwhile, or its old one would be kept instead.
   let wanted;            // not heard yet: undefined; none kept: null
@@ -124,12 +124,12 @@
   const holding = () => appliedAt > 0 && Date.now() - appliedAt < 6000;
   window.addEventListener('message', (event) => {
     // Pages post plain strings too (reCAPTCHA's "recaptcha-setup"): `in` throws on them.
-    if (!onDuty() || event.source !== window || !event.data || typeof event.data !== 'object' || !('ibailaVolume' in event.data)) return;
-    wanted = event.data.ibailaVolume;
+    if (!onDuty() || event.source !== window || !event.data || typeof event.data !== 'object' || !('ijwaVolume' in event.data)) return;
+    wanted = event.data.ijwaVolume;
     settle();
   });
-  // iBaila's slider moved (page.js): that is the loudness held from now on.
-  window.__ibailaWant = (level) => { wanted = level; };
+  // iJWA's slider moved (page.js): that is the loudness held from now on.
+  window.__ijwaWant = (level) => { wanted = level; };
 
   // YouTube Music's own volume slider, moved as a hand would: its value set and told, and the page turns its player to
   // it along its own curve — at 30 on the slider the player plays at 8 (measured 2026-10-09); set on the player
@@ -183,7 +183,7 @@
     }
   }
 
-  // With no slider where it's looked for, what the page has instead, told once for iBaila's log: YouTube Music's page
+  // With no slider where it's looked for, what the page has instead, told once for iJWA's log: YouTube Music's page
   // differs from account to account (a signed-in page had none there, 2026-10-09).
   let probed = '';
   function probe() {
@@ -293,12 +293,12 @@
       return true;
     }
     const cloud = soundCloudSlider();
-    if (cloud && soundCloudSet(cloud, to)) { window.__ibailaVolume = null; return true; }
+    if (cloud && soundCloudSet(cloud, to)) { window.__ijwaVolume = null; return true; }
     if (player && player.setVolume) { player.setVolume(Math.round(to * 100)); return true; }
-    if (media) { media.muted = false; media.volume = to; window.__ibailaVolume = to; return true; }
+    if (media) { media.muted = false; media.volume = to; window.__ijwaVolume = to; return true; }
     return false;
   }
-  window.__ibailaSlide = setLoudness;
+  window.__ijwaSlide = setLoudness;
 
   function settle() {
     if (wanted == null || (appliedAt && !holding())) return;
@@ -310,7 +310,7 @@
 
   // The song playing on Spotify's Web Player, as its page: a link to it in the player, or the album's link that
   // points at it ("?highlight=spotify:track:…", as the signed-in page has it). Not there, what the player holds
-  // instead, for iBaila's log.
+  // instead, for iJWA's log.
   function spotifySong() {
     const pointed = document.querySelector('a[href*="highlight=spotify:track:"], a[href*="highlight=spotify%3Atrack%3A"]');
     if (pointed) {
@@ -319,7 +319,7 @@
     }
     const own = document.querySelector('[data-testid="now-playing-widget"] a[href*="/track/"], [data-testid="now-playing-bar"] a[href*="/track/"], footer a[href*="/track/"]');
     if (own) return own.href;
-    // The signed-in page names only the song's album there (2026-10-10): that, and iBaila finds the song in its list.
+    // The signed-in page names only the song's album there (2026-10-10): that, and iJWA finds the song in its list.
     const bar = document.querySelector('[data-testid="now-playing-widget"], [data-testid="now-playing-bar"], footer');
     const album = bar && bar.querySelector('a[href*="/album/"]');
     if (album) return album.href;
@@ -328,8 +328,8 @@
 
   // The page's own repeat — off, the song ("one") or all of it — read off its own button in any language: YouTube
   // Music's icon (loop, loop_active, loop_one), SoundCloud's mark on it (m-one, m-all), Spotify's checked or half
-  // checked. iBaila's repeat button presses it until it says the one asked (page.js): the page then repeats as it
-  // would for a hand (2026-10-10: iBaila's did nothing on any of them).
+  // checked. iJWA's repeat button presses it until it says the one asked (page.js): the page then repeats as it
+  // would for a hand (2026-10-10: iJWA's did nothing on any of them).
   // YouTube Music's older page keeps it in its player bar; the newer one (signed in, 2026-10-10) in its player controls.
   // The one shown: a page may keep a copy out of sight.
   const repeatSelector = site === 'youTubeMusic' ? 'ytmusic-player-bar .repeat, ytmusic-player-controls .repeat'
@@ -371,7 +371,7 @@
     const checked = b.getAttribute('aria-checked');
     return checked === 'mixed' ? 'one' : checked === 'true' ? 'all' : 'off';
   }
-  // The button as the page has it, for iBaila's log when it couldn't be read or pressed.
+  // The button as the page has it, for iJWA's log when it couldn't be read or pressed.
   function repeatSeen() {
     const all = [...document.querySelectorAll(repeatSelector)];
     const b = repeatButton();
@@ -406,7 +406,7 @@
     }
     return repeatMode() || 'none: ' + repeatSeen();
   }
-  window.__ibailaRepeat = setRepeat;
+  window.__ijwaRepeat = setRepeat;
 
   const plain = (text) => String(text || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
   /** One name within the other, marks and spaces aside: "Lil Tecca" and "Lil Tecca - Topic". */
@@ -437,10 +437,10 @@
       position: own ? own.getCurrentTime() : el ? el.currentTime : null,
       duration: own ? own.getDuration() || 0 : el && isFinite(el.duration) ? el.duration : 0,
       rate: own && ownState === 3 ? 0 : el ? el.playbackRate : 1,
-      // Spotify's Web Player: the song's own page, for its Spotify id (iBaila's Continue Playing finds songs like it).
+      // Spotify's Web Player: the song's own page, for its Spotify id (iJWA's Continue Playing finds songs like it).
       link: site === 'spotifyWeb' ? spotifySong() : '',
       // YouTube Music's song itself, as its player holds it (its media details and player agree, or it's an ad): the
-      // heart in iBaila's bar likes this one, not whatever the player holds a moment later.
+      // heart in iJWA's bar likes this one, not whatever the player holds a moment later.
       song: site === 'youTubeMusic' && held && held.video_id && !stranger ? held.video_id : '',
       // off, one or all, as the page's own repeat button says; null with none.
       repeat: repeatMode(),
@@ -453,13 +453,13 @@
     };
   }
 
-  // What plays now, asked by the extension when it (re)finds iBaila: a paused page tells nothing by itself.
-  window.__ibailaNow = () => { const s = now(); return s.title ? s : null; };
+  // What plays now, asked by the extension when it (re)finds iJWA: a paused page tells nothing by itself.
+  window.__ijwaNow = () => { const s = now(); return s.title ? s : null; };
 
-  if (window.__ibailaMedia) hold(window.__ibailaMedia);
+  if (window.__ijwaMedia) hold(window.__ijwaMedia);
 
   let told = null;
-  function tell(state) { told = state; window.postMessage({ ibailaState: state }, '*'); }
+  function tell(state) { told = state; window.postMessage({ ijwaState: state }, '*'); }
   let timer = 0;
   function soon() { clearTimeout(timer); timer = setTimeout(() => { const s = now(); if (s.title) tell(s); }, 60); }
 

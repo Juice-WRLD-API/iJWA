@@ -1,7 +1,7 @@
 // The sound of the user's own songs (FilePlayer.swift's player): one audio element in a window never shown, told
 // what to play by the app and telling it back where the song is. Its media session makes the keyboard's media keys
 // and Windows' media flyout steer it, as they do any player.
-const api = window.ibaila;
+const api = window.ijwa;
 const audio = document.getElementById('audio');
 let loadedID = null;
 

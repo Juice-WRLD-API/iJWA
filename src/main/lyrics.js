@@ -1,10 +1,10 @@
-// A song's words, from LRCLIB (a free open library, timed line by line). A port of LyricsFinder in iBaila's
+// A song's words, from LRCLIB (a free open library, timed line by line). A port of LyricsFinder in iJWA's
 // Lyrics.swift. Only the song's title, artist, album and length are sent.
 // Two changes from the Mac version: a failed request is tried again twice, and a "no lyrics" answer is
 // remembered for ten minutes only (the Mac version keeps it until the app quits, so lyrics added to LRCLIB
 // later were never seen).
 
-const UA = 'iBaila-Windows/0.1';
+const UA = 'iJWA-Windows/0.1';
 const NONE_MEMORY_MS = 10 * 60 * 1000;
 const cache = new Map(); // key → { at, result }
 

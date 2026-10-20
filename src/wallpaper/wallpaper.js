@@ -1,8 +1,8 @@
 // One display's live wallpaper (WallpaperWindow, WallpaperStage and WallpaperPlane in LiveWallpaper.swift). The app
 // says what to show; this page fades and zooms the pictures in and out and crops a music video's black cinema bars. No
-// dark is laid behind iBaila's glass any more: over a bright picture it showed as a black shadow round the player, and
+// dark is laid behind iJWA's glass any more: over a bright picture it showed as a black shadow round the player, and
 // it looked at the picture ten times a second to do so (his call, 2026-10-10).
-const api = window.ibaila;
+const api = window.ijwa;
 const ARRIVING = 1100, LEAVING = 900;
 
 // The window comes on screen showing the Windows wallpaper exactly as it is, and only then do the pictures come out of

@@ -5,7 +5,7 @@
 // - Spotify's app: its own queue — the songs lined up, then what it carries on with — through the PlayerAPI its queue
 //   page uses (spotifyinside.js).
 // - Spotify's Web Player, YouTube Music and SoundCloud: the queue their page keeps, read by the browser extension.
-// - iBaila's own player (the user's folders): its own queue (fileplayer.js).
+// - iJWA's own player (the user's folders): its own queue (fileplayer.js).
 // - Windows' Apple Music app: it shares nothing of what it plays next, so there is none to show. (The Mac's Music app
 //   gives the rest of the album or playlist it plays from, and the Mac's own catalog player its queue: neither is here.)
 const { EventEmitter } = require('events');
@@ -32,7 +32,7 @@ function videoOf(link) {
 
 class PlayQueue extends EventEmitter {
   /** Each { id — where it plays from, the way its player names it: what a click on it plays — title, artist, album,
-   *  duration, artwork (its picture's address), artworkFile (its cover saved already, by iBaila), isCurrent, isQueued
+   *  duration, artwork (its picture's address), artworkFile (its cover saved already, by iJWA), isCurrent, isQueued
    *  (lined up by the user, not what the player carries on with) }. */
   songs = [];
   isLoading = false;
@@ -57,7 +57,7 @@ class PlayQueue extends EventEmitter {
     return track ? `${track.source}:${track.id}` : null;
   }
 
-  /** iBaila's own player, when it is what plays. */
+  /** iJWA's own player, when it is what plays. */
   get files() { return shared.files; }
 
   /** Read again for the song playing, if it wasn't already, or always when `again`. */
@@ -199,7 +199,7 @@ class PlayQueue extends EventEmitter {
     if (!track) return { songs: [], note: 'Play a song to see what’s next' };
     if (track.source === 'spotify') {
       const found = await spotify.queue();
-      if (!found) return { songs: [], note: 'Pick a song in iBaila to see Spotify’s queue' };
+      if (!found) return { songs: [], note: 'Pick a song in iJWA to see Spotify’s queue' };
       return { songs: found.map(PlayQueue.song), note: found.length > 1 ? 'Up next in Spotify' : 'Nothing up next in Spotify' };
     }
     if (track.source === 'web') {

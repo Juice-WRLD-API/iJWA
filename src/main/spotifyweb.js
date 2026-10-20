@@ -96,10 +96,10 @@ function coverNext() { while (coverSlots > 0 && coverWaiting.length) { coverSlot
 function knownCover(uri) { coversLoad(); return covers.get(uri) || null; }
 
 // ---- an artist's Spotify ID from their name, through MusicBrainz ----
-// Windows tells iBaila a song's name, not its Spotify ID, and Spotify's own window hides its contents while it is
+// Windows tells iJWA a song's name, not its Spotify ID, and Spotify's own window hides its contents while it is
 // minimized. MusicBrainz, the open music encyclopedia, keeps most artists' Spotify links: no key, one request a
 // second (its rule), answers kept on disk so each artist is asked once.
-const MB_UA = 'iBaila/0.1 ( support@yomilly.com )';
+const MB_UA = 'iJWA/0.1 ( support@yomilly.com )';
 let mbCache = null, mbFile = null, mbLast = 0, mbQueue = Promise.resolve();
 function mbLoad() {
   if (mbCache) return;

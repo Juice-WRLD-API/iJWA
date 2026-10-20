@@ -2,7 +2,7 @@
 // list's covers and name, then its songs, the whole of it turned away in 3D like the lists in a story. It lists
 // Continue Playing — for someone in Spotify, songs like the one playing, each by its Spotify ID so Spotify can
 // play it, or the songs played there lately; on YouTube Music or SoundCloud, what the site plays next — or one of
-// the folders of their own songs the user made playlists, which iBaila plays itself — or the Queue, what plays next
+// the folders of their own songs the user made playlists, which iJWA plays itself — or the Queue, what plays next
 // where they listen (playqueue.js). It stays where the user leaves it.
 const { screen, ipcMain, Menu, clipboard, shell, dialog } = require('electron');
 const settings = require('./settings');
@@ -177,7 +177,7 @@ class PlaylistPanel {
       .map((s) => ({ id: s.id, title: s.title, artist: s.artist, album: s.album || '', cover: s.artworkFile ? artwork.url(s.artworkFile) : null }));
   }
 
-  /** The songs played in Spotify, newest first, one version each: the ones iBaila can play there again. */
+  /** The songs played in Spotify, newest first, one version each: the ones iJWA can play there again. */
   spotifySongs() {
     const versions = new Set();
     return this.nowPlaying.history.songs
@@ -224,7 +224,7 @@ class PlaylistPanel {
 
   noticeNow() { return this.notice && this.notice.until > Date.now() ? this.notice.text : null; }
 
-  /** A folder of the user's own songs, played by iBaila itself. */
+  /** A folder of the user's own songs, played by iJWA itself. */
   folderModel() {
     const folder = this.folders?.current;
     const track = this.nowPlaying.track;
@@ -259,7 +259,7 @@ class PlaylistPanel {
     const list = this.catalog;
     const playingArt = this.nowPlaying.snapshot().artwork;
     const songs = list.songs.map((s) => ({ id: s.id, title: s.title, artist: s.artist, album: s.album,
-      cover: (s.cover && (s.cover.startsWith('ibaila:') ? s.cover : covers.local(s.cover))) || (track && plain(s.title) === plain(track.title) ? playingArt : null) }));
+      cover: (s.cover && (s.cover.startsWith('ijwa:') ? s.cover : covers.local(s.cover))) || (track && plain(s.title) === plain(track.title) ? playingArt : null) }));
     const subtitle = this.noticeNow() || (list.isLoading && !songs.length ? 'Finding songs…'
       : list.isRecent ? (songs.length ? 'Recently played in Apple Music' : 'Songs you play in Apple Music come here')
       : songs.length ? `Songs like ${list.seedTitle}` : 'Play a song in Apple Music');
@@ -735,7 +735,7 @@ class PlaylistPanel {
       spotifyURI: song.id.startsWith('spotify:track:') ? song.id : null } : null;
   }
 
-  /** A song of the folder shown: iBaila plays it, the folder's songs after it; the song playing pauses or resumes. */
+  /** A song of the folder shown: iJWA plays it, the folder's songs after it; the song playing pauses or resumes. */
   playFile(index) {
     const folder = this.folders?.current;
     const song = folder?.songs[index];
@@ -815,17 +815,17 @@ class PlaylistPanel {
   }
 
   show(m) {
-    this.opening = openShared('ibaila://app/panel/panel.html', {
+    this.opening = openShared('ijwa://app/panel/panel.html', {
       ...TOOL,
       ...this.frameFor(m), frame: false, transparent: true, resizable: false, movable: false, minimizable: false, maximizable: false,
       fullscreenable: false, skipTaskbar: true, hasShadow: false, show: false, focusable: false, alwaysOnTop: false,
-      backgroundColor: '#00000000', title: 'iBaila',
+      backgroundColor: '#00000000', title: 'iJWA',
       webPreferences: { preload: this.preload, backgroundThrottling: false, contextIsolation: true },
     }, (win) => {
       this.opening = null;
       this.window = win;
       require('./cleardesk').clearDesk.adopt(win);
-      if (!process.env.IBAILA_SHOT) win.once('ready-to-show', () => win.showInactive());
+      if (!process.env.IJWA_SHOT) win.once('ready-to-show', () => win.showInactive());
       this.apply();
     });
   }

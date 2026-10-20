@@ -1,7 +1,7 @@
-// iBaila for Windows: the app's main process. One transparent, click-through window per display
+// iJWA for Windows: the app's main process. One transparent, click-through window per display
 // carries the light; one hidden window listens to the PC's sound; a tray icon holds the controls.
-// Started again with --ibaila-wallpaper, the app only holds the live wallpaper (wallhost.js).
-if (process.argv.includes('--ibaila-wallpaper')) { require('./wallhost'); return; }
+// Started again with --ijwa-wallpaper, the app only holds the live wallpaper (wallhost.js).
+if (process.argv.includes('--ijwa-wallpaper')) { require('./wallhost'); return; }
 const { app, BrowserWindow, Tray, Menu, screen, session, desktopCapturer, ipcMain, nativeImage, systemPreferences, powerMonitor, shell, dialog } = require('electron');
 const path = require('path');
 const protocol = require('./protocol');
@@ -16,13 +16,12 @@ const { DesktopClock } = require('./clock');
 const { LiveWallpaper } = require('./livewallpaper');
 const { ArtistWindow } = require('./artist');
 const { SourceChooser } = require('./chooser');
-const license = require('./license');
 
 require('./log').install();
-// One iBaila at a time: started again (from the Start menu, say), the running one opens its settings.
+// One iJWA at a time: started again (from the Start menu, say), the running one opens its settings.
 if (!app.requestSingleInstanceLock()) { app.quit(); return; }
 // Windows' notifications name the app by the ID its Start menu shortcut carries (electron-builder's appId).
-if (process.platform === 'win32') app.setAppUserModelId('com.yomilly.ibaila.windows');
+if (process.platform === 'win32') app.setAppUserModelId('com.yomilly.ijwa.windows');
 app.on('second-instance', () => (started ? openSettings() : showWelcome()));
 protocol.registerScheme();
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
@@ -32,7 +31,7 @@ app.commandLine.appendSwitch('enable-unsafe-swiftshader');
 // The pages may ask for a collection when they're idle (shared/host.html): the player's pages left what they no longer
 // used lying for minutes, up to hundreds of MB, before a collection came by itself (memory measured, 2026-10-10).
 app.commandLine.appendSwitch('js-flags', '--expose-gc');
-// The network in this process rather than one of its own: a process less, for the little iBaila asks of the network
+// The network in this process rather than one of its own: a process less, for the little iJWA asks of the network
 // (measured as a test, 2026-10-10).
 app.commandLine.appendSwitch('enable-features', 'NetworkServiceInProcess2');
 
@@ -45,7 +44,7 @@ let panel = null;
 let clock = null;
 let live = null;
 let away = false;      // the screen locked or the PC asleep
-let desktopFront = true; // the desktop or iBaila is the window in front (said while the light shows only there)
+let desktopFront = true; // the desktop or iJWA is the window in front (said while the light shows only there)
 let fullScreens = [];  // the displays an app in front fills: a game, a video in full screen
 let waitsForMusic = false; // nothing has played for a few seconds: the light is gone until a song plays
 let energySaver = false;   // Windows' Energy saver is on
@@ -71,7 +70,7 @@ function lightWindow(display) {
   win.setIgnoreMouseEvents(true);
   win.setAlwaysOnTop(true, 'screen-saver');
   win.setBounds({ x, y, width, height });
-  win.loadURL('ibaila://app/light/light.html');
+  win.loadURL('ijwa://app/light/light.html');
   win.once('ready-to-show', () => {
     win.showInactive();
     win.webContents.send('style', { ...lightStyle(settings.get()), fit: fitOf(display) });
@@ -92,7 +91,7 @@ let tickerSent = null;
 
 function tickerText() {
   const track = nowPlaying.track;
-  if (!track) return 'iBaila';
+  if (!track) return 'iJWA';
   const name = `${track.title} — ${track.artist}`;
   const key = `${track.title}\n${track.artist}`;
   if (key !== tickerSong) {
@@ -125,7 +124,7 @@ function openLightPicker() {
     fullscreenable: false, skipTaskbar: true, alwaysOnTop: true, show: false, title: 'Lights', backgroundColor: '#141418',
     webPreferences: { preload: PRELOAD, contextIsolation: true },
   });
-  lightPicker.loadURL('ibaila://app/lightpicker/picker.html');
+  lightPicker.loadURL('ijwa://app/lightpicker/picker.html');
   lightPicker.once('ready-to-show', () => {
     lightPicker.show();
     lightPicker.webContents.send('style', settings.get());
@@ -144,7 +143,7 @@ function openLyricPicker() {
     fullscreenable: false, skipTaskbar: true, alwaysOnTop: true, show: false, title: 'Lyrics', backgroundColor: '#141418',
     webPreferences: { preload: PRELOAD, contextIsolation: true },
   });
-  lyricPicker.loadURL('ibaila://app/lyricpicker/picker.html');
+  lyricPicker.loadURL('ijwa://app/lyricpicker/picker.html');
   lyricPicker.once('ready-to-show', () => {
     lyricPicker.show();
     lyricPicker.webContents.send('style', settings.get());
@@ -153,7 +152,7 @@ function openLyricPicker() {
   lyricPicker.on('closed', () => { lyricPicker = null; });
 }
 
-/** The displays iBaila lives on: all but those switched off in the settings. */
+/** The displays iJWA lives on: all but those switched off in the settings. */
 function shownDisplays() {
   const hidden = new Set(settings.get().hiddenDisplays || []);
   return screen.getAllDisplays().filter((d) => !hidden.has(d.label));
@@ -163,7 +162,7 @@ function shownDisplays() {
  *  is a process of its own, 20–30 MB). */
 function lightsWanted() {
   const s = settings.get();
-  return s.isEnabled !== false && s.isOn && !waitsForMusic && !(s.energy?.restWhenAway && away) && !process.env.IBAILA_SHOT;
+  return s.isEnabled !== false && s.isOn && !waitsForMusic && !(s.energy?.restWhenAway && away) && !process.env.IJWA_SHOT;
 }
 
 function closeLights() {
@@ -237,7 +236,7 @@ let audioOpening = null;
 function openAudio() {
   if (audioWindow && !audioWindow.isDestroyed()) { audioWindow.webContents.send('listen', true); return; }
   if (audioOpening) return;
-  audioOpening = openShared('ibaila://app/light/audio.html', { ...TOOL, show: false, title: 'iBaila',
+  audioOpening = openShared('ijwa://app/light/audio.html', { ...TOOL, show: false, title: 'iJWA',
     webPreferences: { preload: PRELOAD, backgroundThrottling: false, contextIsolation: true } }, (win) => {
     audioOpening = null;
     audioWindow = win;
@@ -290,7 +289,7 @@ function applyStyle() {
 }
 
 /** The settings, rising from the corner over the tray as Windows' own panels do; gone again when something else is
- *  clicked. Opened from the tray icon, the player's ••• menu, or by starting iBaila again. */
+ *  clicked. Opened from the tray icon, the player's ••• menu, or by starting iJWA again. */
 let settingsOpening = null;
 function openSettings() {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
@@ -307,37 +306,36 @@ function openSettings() {
     return;
   }
   if (settingsOpening) return;
-  settingsOpening = openShared('ibaila://app/settings/settings.html', {
+  settingsOpening = openShared('ijwa://app/settings/settings.html', {
     ...settingsBounds(), frame: false, transparent: true, resizable: false, movable: false, minimizable: false, maximizable: false,
-    fullscreenable: false, skipTaskbar: true, show: false, alwaysOnTop: true, hasShadow: false, title: 'iBaila Settings', backgroundColor: '#00000000',
+    fullscreenable: false, skipTaskbar: true, show: false, alwaysOnTop: true, hasShadow: false, title: 'iJWA Settings', backgroundColor: '#00000000',
     webPreferences: { preload: PRELOAD, contextIsolation: true },
   }, (win) => {
     settingsOpening = null;
     settingsWindow = win;
-    if (!process.env.IBAILA_SHOT) win.once('ready-to-show', () => { win.show(); win.focus(); });
+    if (!process.env.IJWA_SHOT) win.once('ready-to-show', () => { win.show(); win.focus(); });
     win.on('blur', () => { if (!settingsBusy) closeSettings(); });
   });
 }
 
-/** The welcome, at the first start (Welcome.swift): where iBaila lives, what it follows, how to make it one's own.
- *  Started or closed, it isn't shown again. IBAILA_WELCOME=1 shows it all the same. */
+/** The welcome, at the first start (Welcome.swift): where iJWA lives, what it follows, how to make it one's own.
+ *  Started or closed, it isn't shown again. IJWA_WELCOME=1 shows it all the same. */
 let welcomeWindow = null;
 function showWelcome() {
   if (welcomeWindow && !welcomeWindow.isDestroyed()) { welcomeWindow.focus(); return; }
   const area = screen.getPrimaryDisplay().workArea;
   const width = 528, height = 488;
   // A window of its own, not one of the shared process's popups (windows.js): those get no button on the taskbar, and
-  // the welcome asking for a key must be findable there.
+  // the welcome must be findable there.
   const win = new BrowserWindow({
     width, height, x: Math.round(area.x + (area.width - width) / 2), y: Math.round(area.y + (area.height - height) / 2),
     frame: false, transparent: true, resizable: false, minimizable: false, maximizable: false, fullscreenable: false, hasShadow: false,
-    show: false, title: 'Welcome to iBaila', backgroundColor: '#00000000', webPreferences: { preload: PRELOAD, contextIsolation: true },
+    show: false, title: 'Welcome to iJWA', backgroundColor: '#00000000', webPreferences: { preload: PRELOAD, contextIsolation: true },
   });
   welcomeWindow = win;
-  win.loadURL('ibaila://app/welcome/welcome.html');
-  if (!process.env.IBAILA_SHOT) win.once('ready-to-show', () => { win.show(); win.focus(); });
-  // Closed without a key, iBaila has nothing to do: it quits.
-  win.on('closed', () => { welcomeWindow = null; if (license.state === 'locked') app.quit(); else settings.set({ welcomed: true }); });
+  win.loadURL('ijwa://app/welcome/welcome.html');
+  if (!process.env.IJWA_SHOT) win.once('ready-to-show', () => { win.show(); win.focus(); });
+  win.on('closed', () => { welcomeWindow = null; settings.set({ welcomed: true }); });
 }
 
 /** Bottom right, just over the taskbar, as tall as the screen allows. */
@@ -364,7 +362,7 @@ function closeSettings(onPurpose = false) {
   }, 150);
 }
 
-/** Windows 11 hides a new app's tray icon behind the arrow: the first time, iBaila's is put on the taskbar, where its
+/** Windows 11 hides a new app's tray icon behind the arrow: the first time, iJWA's is put on the taskbar, where its
  *  settings can be found. Hidden again by the user, it stays hidden. */
 function showTrayIcon() {
   if (process.platform !== 'win32' || settings.get().trayShown) return;
@@ -388,7 +386,7 @@ function resetPosition(which) {
   parts[which]?.apply();
 }
 
-/** The icon by the clock: the playing song's artwork in a ring of the light's colors; iBaila's own mark when
+/** The icon by the clock: the playing song's artwork in a ring of the light's colors; iJWA's own mark when
  *  nothing plays. Its tooltip names the song. */
 const trayMark = () => nativeImage.createFromPath(require('./unpacked').unpacked(path.join(__dirname, '../../resources/tray.png')));
 let trayShows = null;
@@ -398,7 +396,7 @@ async function paintTray() {
   const state = nowPlaying.snapshot();
   const style = settings.get();
   const art = state.playing && state.artwork && style.tray?.artworkIcon !== false ? state.artwork : null;
-  tray.setToolTip(state.track ? `iBaila — ${state.track.title}${state.track.artist ? ` · ${state.track.artist}` : ''}`.slice(0, 127) : 'iBaila');
+  tray.setToolTip(state.track ? `iJWA — ${state.track.title}${state.track.artist ? ` · ${state.track.artist}` : ''}`.slice(0, 127) : 'iJWA');
   const key = art ? `${art}|${JSON.stringify([style.primary, style.secondary, style.twoColors, style.useArtworkColors, style.tray])}|${trayBeat}` : null;
   if (key === trayShows) return;
   trayShows = key;
@@ -416,8 +414,8 @@ function rebuildMenu() {
   const s = settings.get();
   const motion = (value, label) => ({ label, type: 'radio', checked: s.motion === value, click: () => updateStyle({ motion: value }) });
   tray.setContextMenu(Menu.buildFromTemplate([
-    // "Light" switches the light alone, as Settings › Light › Edge Light does; it switched all of iBaila off (Isaac's
-    // report, 2026-10-11). Turned on, it wakes iBaila too, for those it had switched off that way.
+    // "Light" switches the light alone, as Settings › Light › Edge Light does; it switched all of iJWA off (Isaac's
+    // report, 2026-10-11). Turned on, it wakes iJWA too, for those it had switched off that way.
     { label: 'Light', type: 'checkbox', checked: s.isEnabled && s.isOn, click: (item) => updateStyle(item.checked ? { isOn: true, isEnabled: true } : { isOn: false }) },
     { label: 'Motion', submenu: [motion('flow', 'Flow'), motion('music', 'Follow the music'), motion('still', 'Still')] },
     { label: 'Desktop Player', type: 'checkbox', checked: s.desktop.isOn, click: (item) => updateStyle({ desktop: { isOn: item.checked } }) },
@@ -425,7 +423,7 @@ function rebuildMenu() {
     { label: 'Clock', type: 'checkbox', checked: s.clock.isOn, click: (item) => updateStyle({ clock: { isOn: item.checked } }) },
     { label: 'Settings…', click: openSettings },
     { type: 'separator' },
-    { label: 'Quit iBaila', click: () => app.quit() },
+    { label: 'Quit iJWA', click: () => app.quit() },
   ]));
 }
 
@@ -437,62 +435,21 @@ app.whenReady().then(() => {
 });
 app.whenReady().then(() => {
   protocol.handle();
-  // A license first (license.js): without one on this PC, only the welcome shows, asking for the key; with it, all
-  // of iBaila starts.
-  license.start();
-  ipcMain.handle('welcome-hello', () => ({ needsKey: license.state === 'locked', welcomed: Boolean(settings.get().welcomed) }));
-  ipcMain.handle('license-activate', async (_e, key) => {
-    const failure = await license.activate(key);
-    if (!failure) start();
-    return failure;
-  });
-  ipcMain.on('open-store', () => shell.openExternal(license.STORE));
+  ipcMain.handle('welcome-hello', () => ({ welcomed: Boolean(settings.get().welcomed) }));
   ipcMain.on('welcome-done', () => { settings.set({ welcomed: true }); welcomeWindow?.close(); });
   ipcMain.on('quit', () => app.quit());
   ipcMain.on('open-light-picker', () => openLightPicker());
   ipcMain.on('close-light-picker', () => lightPicker?.close());
   ipcMain.on('open-lyric-picker', () => openLyricPicker());
   ipcMain.on('close-lyric-picker', () => lyricPicker?.close());
-  ipcMain.on('license-move', () => moveToAnotherComputer());
   ipcMain.on('check-updates', () => require('./updater').checkNow());
-  // Taken away while iBaila runs (revoked on Polar, or the activation gone): it asks for a key again.
-  license.onChange((state) => { if (state === 'locked') showWelcome(); });
-  if (license.state === 'active') start();
-  // The first time, a welcome; without a key, the welcome asking for it.
-  if (license.state === 'locked') showWelcome();
-  else if (!settings.get().welcomed || process.env.IBAILA_WELCOME) setTimeout(showWelcome, 1200);
+  start();
+  // The first time, a welcome.
+  if (!settings.get().welcomed || process.env.IJWA_WELCOME) setTimeout(showWelcome, 1200);
   else if (!startedAtLogin()) setTimeout(sayStarted, 2000);
-  license.check();
-  // A picture of the welcome asking for a key, drawn unseen: IBAILA_LICENSE=1 IBAILA_SHOT=file.png [IBAILA_SHOT_JS=code].
-  if (process.env.IBAILA_SHOT && license.state === 'locked') {
-    setTimeout(async () => {
-      const win = welcomeWindow;
-      if (process.env.IBAILA_SHOT_JS) console.log('[shot] js:', await win.webContents.executeJavaScript(process.env.IBAILA_SHOT_JS).catch((e) => e.message));
-      await new Promise((r) => setTimeout(r, Number(process.env.IBAILA_SHOT_WAIT || 900)));
-      require('fs').writeFileSync(process.env.IBAILA_SHOT, (await win.webContents.capturePage()).toPNG());
-      console.log('[shot] saved');
-      app.quit();
-    }, Number(process.env.IBAILA_SHOT_MS || 4000));
-  }
 });
 
-/** Lets this PC go, after asking: the key can then be entered on another computer, and iBaila quits here. */
-async function moveToAnotherComputer() {
-  settingsBusy = true;
-  const asked = await dialog.showMessageBox(settingsWindow, { type: 'question', buttons: ['Deactivate', 'Cancel'], defaultId: 0, cancelId: 1, noLink: true,
-    title: 'iBaila', message: 'Move iBaila to another computer?', detail: 'This PC lets go of your license, and iBaila quits. You can then enter your key on another computer.' });
-  if (asked.response !== 0) { settingsBusy = false; return; }
-  const failure = await license.deactivate();
-  if (failure) {
-    await dialog.showMessageBox(settingsWindow, { type: 'warning', buttons: ['OK'], noLink: true, title: 'iBaila', message: 'iBaila couldn’t let this PC go',
-      detail: failure === 'offline' ? 'Can’t reach the license server. Check your connection and try again.' : 'Something went wrong. Try again in a moment.' });
-    settingsBusy = false;
-    return;
-  }
-  app.quit();
-}
-
-/** Whether iBaila starts with Windows: its login item, with "--login" or from before it had it. */
+/** Whether iJWA starts with Windows: its login item, with "--login" or from before it had it. */
 function loginItem() {
   return app.getLoginItemSettings({ args: ['--login'] }).openAtLogin || app.getLoginItemSettings().openAtLogin;
 }
@@ -503,13 +460,13 @@ function startedAtLogin() {
   return process.argv.includes('--login') || require('os').uptime() < 180;
 }
 
-/** Opened by the user: iBaila has no window of its own nor a button on the taskbar, and its icon may wait under the
+/** Opened by the user: iJWA has no window of its own nor a button on the taskbar, and its icon may wait under the
  *  tray's ^ — opened, nothing showed it had (a friend, 2026-10-10). A notification says so; clicked, the settings. */
 function sayStarted() {
   const { Notification } = require('electron');
   if (!started || !Notification.isSupported()) return;
   const note = new Notification({
-    title: 'iBaila is on',
+    title: 'iJWA is on',
     body: 'Your player is on the desktop. Its icon is by the clock, click here for its settings.',
     icon: nativeImage.createFromPath(require('./unpacked').unpacked(path.join(__dirname, '../../resources/app-icon.png'))), silent: true,
   });
@@ -519,9 +476,9 @@ function sayStarted() {
   note.show();
 }
 
-/** Everything iBaila does, once, when its license is active. */
+/** Everything iJWA does, once. */
 let started = false;
-/** On a fresh install with Wallpaper Engine running, iBaila's own wallpaper starts off: on, it covered the one the user
+/** On a fresh install with Wallpaper Engine running, iJWA's own wallpaper starts off: on, it covered the one the user
  *  chose, with nothing saying why (Isaac's report, 2026-10-11). It can be turned on in Settings › Wallpaper. */
 function leaveLiveWallpaperBe() {
   if (process.platform !== 'win32' || !settings.isFresh()) return;
@@ -529,7 +486,7 @@ function leaveLiveWallpaperBe() {
     const running = require('child_process').execFileSync('tasklist', ['/FO', 'CSV', '/NH'], { windowsHide: true, encoding: 'utf8', timeout: 4000 });
     if (/"wallpaper(32|64)\.exe"/i.test(running)) {
       settings.set({ wallpaper: { ...settings.get().wallpaper, isOn: false } });
-      console.log('[wallpaper] Wallpaper Engine is running: iBaila\'s wallpaper starts off');
+      console.log('[wallpaper] Wallpaper Engine is running: iJWA\'s wallpaper starts off');
     }
   } catch { /* not known: as it was */ }
 }
@@ -540,7 +497,7 @@ function start() {
   leaveLiveWallpaperBe();
   require('./wallpaper').start();
   tray = new Tray(trayMark());
-  tray.setToolTip('iBaila');
+  tray.setToolTip('iJWA');
   tray.on('click', () => (settingsWindow?.isVisible?.() ? closeSettings() : openSettings()));
   showTrayIcon();
   rebuildMenu();
@@ -576,7 +533,7 @@ function start() {
     style: settings.get(), version: app.getVersion(), clipBytes: require('./clips').size(),
     accent: process.platform === 'win32' ? `#${systemPreferences.getAccentColor().slice(0, 6)}` : null,
     displays: screen.getAllDisplays().map((d) => ({ id: d.id, label: d.label || `Display ${d.id}` })),
-    openAtLogin: loginItem(), licensed: license.held,
+    openAtLogin: loginItem(),
     extension: require('./extension').extension.browsers(),
   }));
   // The browser extension, added by hand: its folder shown, the browser's extensions page's address ready to paste,
@@ -616,7 +573,7 @@ function start() {
   desktop.apply();
   // The test machine's hooks (diag.js): only where its file of steps is already there, never on a user's PC.
   if (require('fs').existsSync(require('path').join(app.getPath('userData'), 'diag.txt'))) require('./diag').install(desktop);
-  // The user's own songs: the folders they made playlists, played by iBaila itself.
+  // The user's own songs: the folders they made playlists, played by iJWA itself.
   const shared = require('./main-state');
   shared.folders = new (require('./folders').FolderLibrary)();
   shared.files = new (require('./fileplayer').FilePlayer)({ nowPlaying, preload: PRELOAD });
@@ -674,7 +631,7 @@ function start() {
     const found = await findLyrics(track);
     if (lyrics && lyrics.track === track) lyrics = { track, ...found };
   });
-  // iBaila's desktop windows live just above the desktop, as the Mac's do at its desktop level: under every app, over
+  // iJWA's desktop windows live just above the desktop, as the Mac's do at its desktop level: under every app, over
   // the desktop wherever it is (Win+D raises it over everything; they rise with it). The media helper keeps them there;
   // it is told which they are, the player first, whenever they change. Not while one of them has the keys (search typed
   // into, an artist's page open): that one stays where the user is working.
@@ -688,7 +645,7 @@ function start() {
   clearDesk.configure({ windows: () => [clock?.window, panel?.window, desktop?.window, artists.window], live, preload: PRELOAD, nowPlaying });
   // The helper stops keeping them down at once: left to its next look, it pulled them back under the curtain.
   clearDesk.on('change', (on) => { desktop?.send('desk-clear', on); keepDown(); });
-  // Music in a browser without iBaila's extension: the player asks for it in its middle (extensionsetup.js).
+  // Music in a browser without iJWA's extension: the player asks for it in its middle (extensionsetup.js).
   const { extensionSetup } = require('./extensionsetup');
   extensionSetup.start({ nowPlaying });
   extensionSetup.on('state', (state) => desktop?.send('desk-extension', state));
@@ -714,17 +671,17 @@ function start() {
   });
   nowPlaying.start();
   require('./players').useHelper(nowPlaying);
-  // New versions, from iBaila's releases (updater.js).
+  // New versions, from iJWA's releases (updater.js).
   require('./updater').start();
 
-  // A picture of the desktop player, drawn unseen: IBAILA_SHOT=file.png [IBAILA_SHOT_MS=6000] [IBAILA_SHOT_JS=code].
-  if (process.env.IBAILA_SHOT) {
-    if (process.env.IBAILA_SHOT_WINDOW === 'settings') openSettings();
+  // A picture of the desktop player, drawn unseen: IJWA_SHOT=file.png [IJWA_SHOT_MS=6000] [IJWA_SHOT_JS=code].
+  if (process.env.IJWA_SHOT) {
+    if (process.env.IJWA_SHOT_WINDOW === 'settings') openSettings();
     setTimeout(async () => {
-      if (process.env.IBAILA_SHOT_JS) console.log('[shot] js:', await desktop.window.webContents.executeJavaScript(process.env.IBAILA_SHOT_JS).catch((e) => e.message));
-      // A real click (through Chromium's own input), for trying what a mouse does: IBAILA_SHOT_CLICK=x,y.
-      if (process.env.IBAILA_SHOT_CLICK) {
-        const [x, y] = process.env.IBAILA_SHOT_CLICK.split(',').map(Number);
+      if (process.env.IJWA_SHOT_JS) console.log('[shot] js:', await desktop.window.webContents.executeJavaScript(process.env.IJWA_SHOT_JS).catch((e) => e.message));
+      // A real click (through Chromium's own input), for trying what a mouse does: IJWA_SHOT_CLICK=x,y.
+      if (process.env.IJWA_SHOT_CLICK) {
+        const [x, y] = process.env.IJWA_SHOT_CLICK.split(',').map(Number);
         const wc = desktop.window.webContents;
         wc.sendInputEvent({ type: 'mouseMove', x, y });
         wc.sendInputEvent({ type: 'mouseDown', x, y, button: 'left', clickCount: 1 });
@@ -732,19 +689,19 @@ function start() {
         wc.sendInputEvent({ type: 'mouseUp', x, y, button: 'left', clickCount: 1 });
         console.log('[shot] clicked', x, y);
       }
-      if (process.env.IBAILA_SHOT_JS2) { await new Promise((r) => setTimeout(r, 400)); console.log('[shot] js2:', await desktop.window.webContents.executeJavaScript(process.env.IBAILA_SHOT_JS2).catch((e) => e.message)); }
-      if (process.env.IBAILA_SHOT_WAIT) await new Promise((r) => setTimeout(r, Number(process.env.IBAILA_SHOT_WAIT)));
-      const win = { panel: panel.window, clock: clock.window, settings: settingsWindow, artist: artists.window, welcome: welcomeWindow }[process.env.IBAILA_SHOT_WINDOW] || desktop.window;
+      if (process.env.IJWA_SHOT_JS2) { await new Promise((r) => setTimeout(r, 400)); console.log('[shot] js2:', await desktop.window.webContents.executeJavaScript(process.env.IJWA_SHOT_JS2).catch((e) => e.message)); }
+      if (process.env.IJWA_SHOT_WAIT) await new Promise((r) => setTimeout(r, Number(process.env.IJWA_SHOT_WAIT)));
+      const win = { panel: panel.window, clock: clock.window, settings: settingsWindow, artist: artists.window, welcome: welcomeWindow }[process.env.IJWA_SHOT_WINDOW] || desktop.window;
       await new Promise((r) => setTimeout(r, 900));
       const image = await win.webContents.capturePage();
-      require('fs').writeFileSync(process.env.IBAILA_SHOT, image.toPNG());
+      require('fs').writeFileSync(process.env.IJWA_SHOT, image.toPNG());
       console.log('[shot] saved', image.getSize());
       app.quit();
-    }, Number(process.env.IBAILA_SHOT_MS || 6000));
+    }, Number(process.env.IJWA_SHOT_MS || 6000));
   }
 
-  // A quick self-check: IBAILA_SMOKE=1 runs for a few seconds, reports what happened, and quits.
-  if (process.env.IBAILA_SMOKE) {
+  // A quick self-check: IJWA_SMOKE=1 runs for a few seconds, reports what happened, and quits.
+  if (process.env.IJWA_SMOKE) {
     nowPlaying.on('track', (track) => console.log('[smoke] track:', track?.title, '-', track?.artist));
     setTimeout(() => console.log('[smoke] gpu:', JSON.stringify(app.getGPUFeatureStatus())), 3000);
     const report = async () => {
@@ -755,7 +712,7 @@ function start() {
         '| lyrics:', lyrics ? `${lyrics.status}${lyrics.lyrics ? ' ' + lyrics.lyrics.lines.length + ' lines' : ''}` : 'none',
         '| meter:', lastMeter ? `${lastMeter.decibels.toFixed(1)} dB, punch ${lastMeter.punch.toFixed(2)}` : 'no audio values yet');
     };
-    const total = Number(process.env.IBAILA_SMOKE_MS || 9000);
+    const total = Number(process.env.IJWA_SMOKE_MS || 9000);
     for (let t = 4000; t < total; t += 4000) setTimeout(report, t);
     setTimeout(() => report().then(() => app.quit()), total);
   }

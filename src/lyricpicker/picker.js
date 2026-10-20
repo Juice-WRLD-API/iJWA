@@ -5,7 +5,7 @@ import { SCENES } from '../desktop/lyricstyles.js';
 import { LYRIC_LOOKS, lyricFontFor } from '../desktop/lyriclooks.js';
 import { paletteFromPixels } from '../light/engine.js';
 
-const api = window.ibaila;
+const api = window.ijwa;
 const SCALE = 0.36;
 const LINES = ['your words land here', 'word by word on the beat', 'in the style you pick'];
 const EACH = 2.4;
@@ -50,7 +50,7 @@ function sing(t) {
   const now = performance.timeOrigin / 1000 + performance.now() / 1000;
   const round = Math.floor((now - started) / PERIOD);
   const clock = { seconds: 0, at: started + round * PERIOD, running: true };
-  t.view.show({ id: `preview-${round}`, lyrics, title: 'iBaila', artist: '', duration: PERIOD },
+  t.view.show({ id: `preview-${round}`, lyrics, title: 'iJWA', artist: '', duration: PERIOD },
     { clock, isSeen: t.seen, colors: album, face: lyricFontFor(style.desktop, t.look.id), scale: SCALE });
 }
 function singAll() { tiles.forEach(sing); }

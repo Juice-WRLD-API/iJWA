@@ -1,5 +1,5 @@
 // The user's own lists on the music site they listen on — their playlists on YouTube Music, SoundCloud or Spotify's
-// Web Player, and the songs they liked there — read by iBaila's extension in the site's tab, where they are signed in
+// Web Player, and the songs they liked there — read by iJWA's extension in the site's tab, where they are signed in
 // (lists.js), for the playlist (WebPlaylists.swift). Kept on disk for each site, so they show at once; read again when
 // the shelf opens, a list is chosen, or the refresh is pressed. Nothing is read while nobody asks.
 const fs = require('fs');

@@ -1,5 +1,5 @@
 // The song's words looked for by hand on Genius, and timed to the song (DesktopPlayer.searchLyrics / timeLyrics /
-// downloadVoiceModel in iBaila's DesktopPlayer.swift): the one chosen is kept for the song, shown at once, and — with
+// downloadVoiceModel in iJWA's DesktopPlayer.swift): the one chosen is kept for the song, shown at once, and — with
 // the voice model downloaded — timed to the song (lyricsync.js). The first search offers the download, once (his call,
 // 2026-10-12: "ilk seferde sorarsın, kullanıcı isterse indirir").
 'use strict';
@@ -49,12 +49,12 @@ class LyricsTiming {
     });
     if (!sync.isInstalled() && !sync.wasAsked()) {
       sync.setAsked(true);
-      // Asked over the panel, which stands above every window: a question of its own, iBaila being behind the others
+      // Asked over the panel, which stands above every window: a question of its own, iJWA being behind the others
       // (the desktop's level), came up out of sight and the panel waited for it (the test PC, 2026-10-12).
       const { response } = await dialog.showMessageBox(panel, {
         type: 'question', buttons: ['Download', 'Not Now'], defaultId: 0, cancelId: 1, noLink: true,
-        title: 'iBaila', message: 'Time lyrics to the song? (Beta)',
-        detail: 'iBaila can listen to songs playing on YouTube, YouTube Music and SoundCloud and put their lyrics on time, on this PC. It needs a voice model, downloaded once (190 MB).',
+        title: 'iJWA', message: 'Time lyrics to the song? (Beta)',
+        detail: 'iJWA can listen to songs playing on YouTube, YouTube Music and SoundCloud and put their lyrics on time, on this PC. It needs a voice model, downloaded once (190 MB).',
       });
       log('voice model:', response === 0 ? 'download' : 'not now');
       if (response === 0) this.downloadVoiceModel();
@@ -79,7 +79,7 @@ class LyricsTiming {
       webPreferences: { preload: this.preload, contextIsolation: true },
     });
     const window = this.window;
-    window.loadURL('ibaila://app/lyricsearch/search.html');
+    window.loadURL('ijwa://app/lyricsearch/search.html');
     window.on('closed', () => { if (this.window === window) { this.window = null; this.chosen = null; } });
     return new Promise((done) => window.once('ready-to-show', () => {
       window.webContents.send('lyrics-search-open', asked);
@@ -121,11 +121,11 @@ class LyricsTiming {
     const find = () => (extension.followed && sites.includes(extension.followed.site) ? extension.followed : null)
       || extension.pagePlaying(song.title, sites);
     let page = song.source === 'web' ? find() : null;
-    // The browser's extension not back yet — iBaila just started again, and the browser lets its extension sleep: it
+    // The browser's extension not back yet — iJWA just started again, and the browser lets its extension sleep: it
     // came back 20 s to 4 min later on the test PC (2026-10-12), and a pick meanwhile was never timed. Waited for, a
     // minute at most.
     if (song.source === 'web' && !page) {
-      this.notice({ title: 'Waiting for the browser…', detail: 'Its iBaila extension comes back in a moment', busy: true, symbol: 'waveform' }, 70);
+      this.notice({ title: 'Waiting for the browser…', detail: 'Its iJWA extension comes back in a moment', busy: true, symbol: 'waveform' }, 70);
       for (let waited = 0; waited < 60 && !page; waited++) {
         await new Promise((done) => setTimeout(done, 1000));
         page = find();
@@ -134,7 +134,7 @@ class LyricsTiming {
     }
     if (song.source !== 'web' || !page) {
       log("can't hear it:", song.source, extension.followed?.site || 'no page followed');
-      this.notice({ title: 'Lyrics are timed on YouTube and SoundCloud', detail: "This song plays where iBaila can't hear it." }, 5);
+      this.notice({ title: 'Lyrics are timed on YouTube and SoundCloud', detail: "This song plays where iJWA can't hear it." }, 5);
       return;
     }
     this.notice({ title: 'Timing the lyrics to the song…', detail: 'On this PC, a few seconds', busy: true, symbol: 'waveform' }, 300);

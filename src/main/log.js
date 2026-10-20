@@ -1,4 +1,4 @@
-// What the app says, kept in a small file beside its settings (iBaila.log), so a problem on someone's PC can be
+// What the app says, kept in a small file beside its settings (iJWA.log), so a problem on someone's PC can be
 // read afterwards. The pages' own messages and errors go there too.
 const { app } = require('electron');
 const fs = require('fs');
@@ -8,7 +8,7 @@ let file = null;
 function write(level, parts) {
   try {
     if (!file) {
-      file = path.join(app.getPath('userData'), 'iBaila.log');
+      file = path.join(app.getPath('userData'), 'iJWA.log');
       // Starts afresh once it passes half a megabyte.
       try { if (fs.statSync(file).size > 512 * 1024) fs.unlinkSync(file); } catch { /* no file yet */ }
     }

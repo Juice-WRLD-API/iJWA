@@ -1,6 +1,6 @@
 // Packs the app back into dist/app.asar (+ dist/app.asar.unpacked), laid out like the original release:
 // everything under resources/ and the PowerShell agents stay loose beside the archive, the rest goes inside.
-// Drop both into the installed app's resources folder (%LOCALAPPDATA%\Programs\iBaila\resources) to use them.
+// Drop both into the installed app's resources folder (%LOCALAPPDATA%\Programs\iJWA\resources) to use them.
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');

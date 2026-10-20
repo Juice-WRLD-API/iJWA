@@ -1,5 +1,5 @@
 // The heart in the bar (Likes.swift): the song playing liked where it plays, and the like taken back. YouTube Music,
-// SoundCloud and Spotify keep it on the user's account there, asked through iBaila's extension inside a page signed
+// SoundCloud and Spotify keep it on the user's account there, asked through iJWA's extension inside a page signed
 // in — the song's own tab, or, for Spotify's app, a Web Player tab (opened behind the others when the heart is
 // pressed and there is none). Apple Music's app and the user's own files: no heart, for now.
 const { extension } = require('./extension');

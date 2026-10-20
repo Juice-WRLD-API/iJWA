@@ -1,4 +1,4 @@
-// The songs iBaila has seen, kept as a ring for the desktop player (PlayHistory.swift). A new song joins right
+// The songs iJWA has seen, kept as a ring for the desktop player (PlayHistory.swift). A new song joins right
 // after the one that was playing and a song played again keeps its place, so the player only ever turns the
 // ring and never reshuffles it. Saved with its artwork, so the ring is still there after a restart. Past the
 // limit, the song furthest round the ring from the one playing is let go.

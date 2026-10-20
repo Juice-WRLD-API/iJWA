@@ -5,7 +5,7 @@ import { FACES } from '../desktop/wordblock.js';
 import { lyricLookOf, lyricFontFor } from '../desktop/lyriclooks.js';
 import { lookOf, PLACES } from '../light/looks.js';
 
-const api = window.ibaila;
+const api = window.ijwa;
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const escape = (text) => String(text ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -110,7 +110,7 @@ function groups() {
       <div data-show="ring">${slider('Ring Thickness', 'tray.ringThickness')}${slider('Ring Glow', 'tray.ringGlow')}
         ${toggleRow('Pulse with the beat', 'tray.ringPulse')}
         <p class="note" data-show="pulse-note">Beats are heard while the light is set to Music Sync.</p></div>`)],
-    ['displays', 'Displays', `<p class="note">iBaila lives on the displays you choose: the light and the live wallpaper go with it.</p>
+    ['displays', 'Displays', `<p class="note">iJWA lives on the displays you choose: the light and the live wallpaper go with it.</p>
       <div id="displays" style="display:flex;flex-direction:column;gap:8px"></div>`],
     ['general', 'General', `
       <span class="label">Energy</span>
@@ -126,12 +126,9 @@ function groups() {
       <div class="line"><span class="grow">Browser Extension<span class="note" style="display:block" id="extension-note"></span></span>
         <button class="button" data-action="install-extension" id="extension-install">Install…</button></div>
       <p class="note" id="extension-steps" hidden></p>
-      ${hello?.licensed ? `<hr style="margin:2px 0">
-      <div class="line"><span class="grow">License<span class="note" style="display:block">Active on this PC</span></span>
-        <button class="button" data-action="license-move">Deactivate…</button></div>` : ''}
       <hr style="margin:2px 0">
       <div class="foot"><span class="version" id="version"></span><button class="button" data-action="check-updates">Check for Updates…</button></div>
-      <div class="foot"><span></span><button class="button" data-action="quit">Quit iBaila</button></div>`],
+      <div class="foot"><span></span><button class="button" data-action="quit">Quit iJWA</button></div>`],
   ];
 }
 
@@ -225,7 +222,7 @@ function refresh() {
     const thumb = $('#video-thumb');
     if (video && thumb.dataset.video !== video) {
       thumb.dataset.video = video;
-      thumb.innerHTML = `<video muted preload="metadata" src="ibaila://app/desktop-video/${video.split('/').map(encodeURIComponent).join('/')}#t=1"></video>`;
+      thumb.innerHTML = `<video muted preload="metadata" src="ijwa://app/desktop-video/${video.split('/').map(encodeURIComponent).join('/')}#t=1"></video>`;
     }
   }
   drawDisplays();
@@ -282,7 +279,6 @@ document.addEventListener('click', async (event) => {
   if (action === 'clear-clips') { const { bytes } = await api.invoke('wall-clear'); showStorage(bytes); }
   if (action === 'quit') api.send('quit');
   if (action === 'close') api.send('settings-close');
-  if (action === 'license-move') api.send('license-move');
   if (action === 'check-updates') api.send('check-updates');
   if (action === 'install-extension') {
     const { page } = await api.invoke('install-extension');

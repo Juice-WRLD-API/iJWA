@@ -1,6 +1,6 @@
 // The live wallpaper's own process. Its windows live inside the desktop (desktop-layer.ps1), as children of Explorer's
 // own window, and Windows ties a window's input to its parent's: were they the app's, a busy or stuck Explorer would
-// stop clicks on the player, the playlist and the clock too. Here they share nothing with the rest of iBaila, which
+// stop clicks on the player, the playlist and the clock too. Here they share nothing with the rest of iJWA, which
 // says what to show, one JSON line at a time over a named pipe (an app like this one can't read its standard input on
 // Windows), and hears back the still the glass should frost.
 //   in:  { type: 'config', clips, videos, beneath, preload, layer }  where things are
@@ -15,13 +15,13 @@ const path = require('path');
 const fs = require('fs');
 
 // A data folder of its own: two processes can't share one.
-app.setPath('userData', path.join(app.getPath('appData'), 'iBaila Wallpaper'));
+app.setPath('userData', path.join(app.getPath('appData'), 'iJWA Wallpaper'));
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'ibaila', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } },
+  { scheme: 'ijwa', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } },
 ]);
 
-const pipe = (process.argv.find((a) => a.startsWith('--ibaila-pipe=')) || '').slice('--ibaila-pipe='.length);
+const pipe = (process.argv.find((a) => a.startsWith('--ijwa-pipe=')) || '').slice('--ijwa-pipe='.length);
 let link = null;
 const say = (message) => { try { link?.write(JSON.stringify(message) + '\n'); } catch { /* the app is gone */ } };
 const log = (...parts) => say({ type: 'log', text: parts.join(' ') });
@@ -78,14 +78,14 @@ function open(display) {
   const { x, y, width, height } = display.bounds;
   const win = new BrowserWindow({
     x, y, width, height, frame: false, resizable: false, movable: false, minimizable: false, maximizable: false, fullscreenable: false,
-    skipTaskbar: true, focusable: false, hasShadow: false, show: false, backgroundColor: '#000000', title: 'iBaila',
+    skipTaskbar: true, focusable: false, hasShadow: false, show: false, backgroundColor: '#000000', title: 'iJWA',
     ...(process.platform === 'win32' ? { type: 'toolbar' } : {}),
     webPreferences: { preload: config.preload, backgroundThrottling: false, contextIsolation: true },
   });
   win.setIgnoreMouseEvents(true);
   const entry = { window: win, display, ready: false, placing: false };
   windows.set(display.id, entry);
-  win.loadURL('ibaila://app/wallpaper/wallpaper.html');
+  win.loadURL('ijwa://app/wallpaper/wallpaper.html');
   win.webContents.once('did-finish-load', () => {
     entry.ready = true;
     if (states[display.id]) win.webContents.send('wall-state', states[display.id]);
@@ -112,10 +112,10 @@ async function onScreen(entry) {
   const win = entry.window;
   await intoDesktop(win, entry.display);
   if (win.isDestroyed()) return;
-  // A picture of it, drawn unseen, for building on the Mac: IBAILA_SHOT_WALL=file.png.
-  if (process.env.IBAILA_SHOT_WALL) {
+  // A picture of it, drawn unseen, for building on the Mac: IJWA_SHOT_WALL=file.png.
+  if (process.env.IJWA_SHOT_WALL) {
     win.webContents.send('wall-shown');
-    setTimeout(async () => { if (win.isDestroyed()) return; fs.writeFileSync(process.env.IBAILA_SHOT_WALL, (await win.webContents.capturePage()).toPNG()); log('[shot] wall saved'); }, 9000);
+    setTimeout(async () => { if (win.isDestroyed()) return; fs.writeFileSync(process.env.IJWA_SHOT_WALL, (await win.webContents.capturePage()).toPNG()); log('[shot] wall saved'); }, 9000);
     return;
   }
   win.showInactive();
@@ -123,7 +123,7 @@ async function onScreen(entry) {
 }
 
 app.whenReady().then(() => {
-  protocol.handle('ibaila', serve);
+  protocol.handle('ijwa', serve);
   ipcMain.handle('wall-hello', (event) => {
     const entry = [...windows.values()].find((w) => w.window.webContents === event.sender);
     return entry ? states[entry.display.id] || null : null;

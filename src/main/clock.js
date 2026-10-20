@@ -36,17 +36,17 @@ class DesktopClock {
     const area = screen.getPrimaryDisplay().workArea;
     const place = this.style.place || DEFAULT_PLACE;
     const size = { width: 400, height: 420 };
-    this.opening = openShared('ibaila://app/clock/clock.html', {
+    this.opening = openShared('ijwa://app/clock/clock.html', {
       ...TOOL,
       x: Math.round(area.x + area.width * place[0] - size.width / 2), y: Math.round(area.y + area.height * place[1] - size.height / 2), ...size,
       frame: false, transparent: true, resizable: false, movable: false, minimizable: false, maximizable: false, fullscreenable: false,
-      skipTaskbar: true, hasShadow: false, show: false, focusable: false, alwaysOnTop: false, backgroundColor: '#00000000', title: 'iBaila',
+      skipTaskbar: true, hasShadow: false, show: false, focusable: false, alwaysOnTop: false, backgroundColor: '#00000000', title: 'iJWA',
       webPreferences: { preload: this.preload, backgroundThrottling: false, contextIsolation: true },
     }, (win) => {
       this.opening = null;
       this.window = win;
       require('./cleardesk').clearDesk.adopt(win);
-      if (!process.env.IBAILA_SHOT) win.once('ready-to-show', () => win.showInactive());
+      if (!process.env.IJWA_SHOT) win.once('ready-to-show', () => win.showInactive());
     });
   }
 

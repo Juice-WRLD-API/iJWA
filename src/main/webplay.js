@@ -1,4 +1,4 @@
-// Songs picked in iBaila, played on the web where the user listens (NowPlaying.playOnWeb): found on that site —
+// Songs picked in iJWA, played on the web where the user listens (NowPlaying.playOnWeb): found on that site —
 // YouTube Music, SoundCloud, YouTube — and opened in the browser, kept behind, the site's old tab closing; a page that
 // doesn't start by itself (SoundCloud's) has its own Play pressed. The back button goes back through the songs heard
 // there, as a player's does: the site's own goes back only within its list.
@@ -170,7 +170,7 @@ class WebPlay {
     const fromWeb = track?.source === 'web';
     // What plays in the browser for a while now is this site's.
     this.opened = { site, at: Date.now() };
-    // With iBaila's extension: in the page itself, one tab for every site, nothing typed and nothing coming forward
+    // With iJWA's extension: in the page itself, one tab for every site, nothing typed and nothing coming forward
     // (the page's own leaving asks no "Leave site?").
     if (MUSIC.has(site)) {
       const told = await this.openInPage(url, site, title, track?.id);
@@ -277,7 +277,7 @@ class WebPlay {
     }
     this.goingBack = true;
     const song = np.history.songs.find((s) => s.id === previous.id);
-    const asking = np.ask({ title: previous.title, artist: previous.artist, picture: song?.artworkFile ? `ibaila://app/artwork/${song.artworkFile}` : null });
+    const asking = np.ask({ title: previous.title, artist: previous.artist, picture: song?.artworkFile ? `ijwa://app/artwork/${song.artworkFile}` : null });
     (async () => {
       // Its page by the words it was asked by — "Classy - Juice WRLD" is shown as Classy, by Juice WRLD.
       const page = [previous.title, `${previous.title} ${previous.artist}`, `${previous.artist} ${previous.title}`]

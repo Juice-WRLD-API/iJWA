@@ -1,5 +1,5 @@
 // Song covers from the web, kept on disk: a list shown again has its pictures at once, and pages reach a cover as
-// ibaila://app/cover/<name> — their own origin, so they can read its colors. A cover not on disk yet is fetched the
+// ijwa://app/cover/<name> — their own origin, so they can read its colors. A cover not on disk yet is fetched the
 // moment it is asked for (or warmed earlier), once however many ask.
 const { app, net } = require('electron');
 const fs = require('fs');
@@ -19,7 +19,7 @@ function local(link) {
   if (!link || !/^https?:/.test(link)) return link || null;
   const name = nameOf(link);
   remotes.set(name, link);
-  return `ibaila://app/cover/${name}`;
+  return `ijwa://app/cover/${name}`;
 }
 
 /** Fetches a cover onto disk before any page asks for it. */
@@ -51,7 +51,7 @@ function bytes(name) {
   return run;
 }
 
-/** Serves ibaila://app/cover/<name>: from disk, else fetched now. */
+/** Serves ijwa://app/cover/<name>: from disk, else fetched now. */
 async function serve(name) {
   name = path.basename(name);
   const file = path.join(folder(), name);

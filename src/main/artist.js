@@ -39,16 +39,16 @@ class ArtistWindow {
     if (this.opening) return;
     const { width, height } = this.size();
     const { window: player } = this.player();
-    this.opening = openShared('ibaila://app/artist/artist.html', {
+    this.opening = openShared('ijwa://app/artist/artist.html', {
       // Owned by the player, it always stands in front of it, even as the player is clicked.
       ...(player && !player.isDestroyed() ? { parent: player } : {}),
       ...this.place(width, height), frame: false, transparent: true, resizable: false, movable: false, minimizable: false, maximizable: false,
-      fullscreenable: false, skipTaskbar: true, hasShadow: false, show: false, backgroundColor: '#00000000', title: 'iBaila',
+      fullscreenable: false, skipTaskbar: true, hasShadow: false, show: false, backgroundColor: '#00000000', title: 'iJWA',
       ...(process.platform === 'win32' ? { type: 'toolbar' } : {}),
       webPreferences: { preload: this.preload, contextIsolation: true },
     }, (win) => {
       this.opening = null;
-      if (!process.env.IBAILA_SHOT) win.once('ready-to-show', () => { win.show(); win.focus(); });
+      if (!process.env.IJWA_SHOT) win.once('ready-to-show', () => { win.show(); win.focus(); });
       win.on('closed', () => { if (this.window === win) this.window = null; });
       this.window = win;
       require('./cleardesk').clearDesk.adopt(win);
@@ -84,7 +84,7 @@ class ArtistWindow {
   }
 
   /** The artist's page from Apple Music — or from YouTube Music or SoundCloud, for an artist found there — its pictures
-   *  through iBaila's own folder. */
+   *  through iJWA's own folder. */
   async page(id) {
     const webmusic = require('./webmusic');
     const item = this.item?.id === id ? this.item : { id, title: '' };

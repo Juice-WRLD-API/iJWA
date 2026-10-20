@@ -1,5 +1,5 @@
 // The places one listens in, as their marks (SourceMark.swift): Apple Music, Spotify, YouTube, YouTube Music,
-// SoundCloud, a browser and iBaila's own player — drawn here, on a 100-unit square, the mark filling about four
+// SoundCloud, a browser and iJWA's own player — drawn here, on a 100-unit square, the mark filling about four
 // fifths of it as an app icon's shape does, so they stand side by side at one size.
 const mark = (body, defs = '') =>
   `<svg viewBox="0 0 100 100" aria-hidden="true"><defs>${defs}</defs><g transform="translate(9 9) scale(0.82)">${body}</g></svg>`;

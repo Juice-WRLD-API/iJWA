@@ -1,4 +1,4 @@
-# Works the music pages in the user's browser for iBaila — YouTube Music, SoundCloud, YouTube — for as long as it
+# Works the music pages in the user's browser for iJWA — YouTube Music, SoundCloud, YouTube — for as long as it
 # runs: one process, started when a browser first plays. A browser takes no orders from other apps on Windows (no
 # JavaScript from outside, as the Mac's browsers allow), so its window is read the way a screen reader does it (UI
 # Automation): its tabs' titles, a page's own Play button. Only the browser's own controls are walked to find the
@@ -20,11 +20,11 @@ $A = [System.Windows.Automation.AutomationElement]
 $Scope = [System.Windows.Automation.TreeScope]
 $Types = [System.Windows.Automation.ControlType]
 $walker = [System.Windows.Automation.TreeWalker]::ControlViewWalker
-# Run by agents.ps1, lines go to and come from iBaila through it; run on its own, through the console.
-if (-not $IBailaOut) { $IBailaOut = [Console]::Out }
-function Say($object) { $IBailaOut.WriteLine(($object | ConvertTo-Json -Compress -Depth 5)); $IBailaOut.Flush() }
+# Run by agents.ps1, lines go to and come from iJWA through it; run on its own, through the console.
+if (-not $IJWAOut) { $IJWAOut = [Console]::Out }
+function Say($object) { $IJWAOut.WriteLine(($object | ConvertTo-Json -Compress -Depth 5)); $IJWAOut.Flush() }
 
-Add-Type -Namespace IBailaWeb -Name Win -MemberDefinition @'
+Add-Type -Namespace IJWAWeb -Name Win -MemberDefinition @'
 [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
 [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
 [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
@@ -35,7 +35,7 @@ Add-Type -Namespace IBailaWeb -Name Win -MemberDefinition @'
 [DllImport("dwmapi.dll")] public static extern int DwmSetWindowAttribute(IntPtr h, int attribute, ref int value, int size);
 [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
 /// `h` put back under `above`, the window it was under, giving no keys. A window put under one in the topmost band is
-/// made topmost itself: a browser put back under iBaila's light (topmost, over the whole screen) stayed over every
+/// made topmost itself: a browser put back under iJWA's light (topmost, over the whole screen) stayed over every
 /// window after (the test PC, 2026-10-12). Under a topmost window an ordinary one was the top of the ordinary ones,
 /// so it goes back there instead.
 public static void PutUnder(IntPtr h, IntPtr above) {
@@ -188,10 +188,10 @@ function Windows {
 }
 
 # A browser's window as UI Automation sees it. Opera's shows nothing at all — not even its title bar — until woken
-# (Wake): woken then, and looked at afresh. Never another's: woken, Edge's elements went stale under iBaila.
+# (Wake): woken then, and looked at afresh. Never another's: woken, Edge's elements went stale under iJWA.
 function Woken($element, $handle) {
   if ($walker.GetFirstChild($element)) { return $element }
-  [IBailaWeb.Win]::Wake($handle)
+  [IJWAWeb.Win]::Wake($handle)
   return [System.Windows.Automation.AutomationElement]::FromHandle($handle)
 }
 
@@ -233,16 +233,16 @@ function Tabs($c) {
 # animations, so nothing seems to happen but the music changing.
 function SeeThrough($handle, $on) {
   if (-not $handle -or $handle -eq [IntPtr]::Zero) { return }
-  $style = [IBailaWeb.Win]::GetWindowLong($handle, -20)
+  $style = [IJWAWeb.Win]::GetWindowLong($handle, -20)
   $off = [int]$on
-  $null = [IBailaWeb.Win]::DwmSetWindowAttribute($handle, 3, [ref]$off, 4)
+  $null = [IJWAWeb.Win]::DwmSetWindowAttribute($handle, 3, [ref]$off, 4)
   # Layered at no opacity, and passing clicks through (WS_EX_TRANSPARENT): there, but neither seen nor in the way.
-  if ($on) { $null = [IBailaWeb.Win]::SetWindowLong($handle, -20, $style -bor 0x80020); $null = [IBailaWeb.Win]::SetLayeredWindowAttributes($handle, 0, 0, 2) }
-  else { $null = [IBailaWeb.Win]::SetLayeredWindowAttributes($handle, 0, 255, 2); $null = [IBailaWeb.Win]::SetWindowLong($handle, -20, $style -band (-bnot 0x80020)) }
+  if ($on) { $null = [IJWAWeb.Win]::SetWindowLong($handle, -20, $style -bor 0x80020); $null = [IJWAWeb.Win]::SetLayeredWindowAttributes($handle, 0, 0, 2) }
+  else { $null = [IJWAWeb.Win]::SetLayeredWindowAttributes($handle, 0, 255, 2); $null = [IJWAWeb.Win]::SetWindowLong($handle, -20, $style -band (-bnot 0x80020)) }
 }
 
 # Whether the keyboard is at `$element` or inside it. Keys go wherever the keyboard is, and Windows doesn't always let
-# iBaila bring a browser forward: with Search in front (the test machine, 2026-10-09), an address meant for Opera was
+# iJWA bring a browser forward: with Search in front (the test machine, 2026-10-09), an address meant for Opera was
 # typed into Search, and its Enter opened a page in Edge — on the desktop, Ctrl+A and Delete would have binned files.
 # So no key is pressed before this says yes.
 function FocusIn($element) {
@@ -260,21 +260,21 @@ function FocusIn($element) {
 # Whether the window in front is `$handle` or another of its browser's — a page's "Chrome Legacy Window" takes the
 # front by itself, a window of its own.
 function InFront($handle) {
-  $now = [IBailaWeb.Win]::GetForegroundWindow()
+  $now = [IJWAWeb.Win]::GetForegroundWindow()
   if ($now -eq [IntPtr]::Zero) { return $false }
   if ($now -eq $handle) { return $true }
-  $mine = [IBailaWeb.Win]::ProcessOf($handle)
-  return $mine -ne 0 -and [IBailaWeb.Win]::ProcessOf($now) -eq $mine
+  $mine = [IJWAWeb.Win]::ProcessOf($handle)
+  return $mine -ne 0 -and [IJWAWeb.Win]::ProcessOf($now) -eq $mine
 }
 
 # The keys back to the window the user was in. Windows lets a program in the background hand them on only just after
 # a key is pressed: F24, on no keyboard, is pressed first.
 function GiveBack($front) {
   # No window was in front (as just after Search closes): the keyboard goes to the desktop, never kept by the browser.
-  if (-not $front -or $front -eq [IntPtr]::Zero) { $front = [IBailaWeb.Win]::GetShellWindow() }
+  if (-not $front -or $front -eq [IntPtr]::Zero) { $front = [IJWAWeb.Win]::GetShellWindow() }
   if ($front -eq [IntPtr]::Zero) { return }
-  [IBailaWeb.Win]::keybd_event(0x87, 0, 0, [IntPtr]::Zero); [IBailaWeb.Win]::keybd_event(0x87, 0, 2, [IntPtr]::Zero)
-  $null = [IBailaWeb.Win]::SetForegroundWindow($front)
+  [IJWAWeb.Win]::keybd_event(0x87, 0, 0, [IntPtr]::Zero); [IJWAWeb.Win]::keybd_event(0x87, 0, 2, [IntPtr]::Zero)
+  $null = [IJWAWeb.Win]::SetForegroundWindow($front)
 }
 
 # The tab's own close button ("Close tab", whatever the language): known by its kind (TabCloseButton,
@@ -313,7 +313,7 @@ function SameTitle([string]$a, [string]$b) {
 function Open($c) {
   $url = [string]$c.url; $site = [string]$c.site; $wantApp = [string]$c.app
   $playing = Plain ([string]$c.playing)
-  $front = [IBailaWeb.Win]::GetForegroundWindow()
+  $front = [IJWAWeb.Win]::GetForegroundWindow()
   $windows = @(Windows)
   # The browser played in, else the one with the site open, else the first open.
   $mine = @($windows | Where-Object { $_.app -eq $wantApp })
@@ -341,13 +341,13 @@ function Open($c) {
     $h = [IntPtr]::Zero
     $until = (Get-Date).AddSeconds(10)
     while ((Get-Date) -lt $until) {
-      $h = [IBailaWeb.Win]::BrowserShown($Browsers)
+      $h = [IJWAWeb.Win]::BrowserShown($Browsers)
       if ($h -ne [IntPtr]::Zero) { break }
       Start-Sleep -Milliseconds 10
     }
     if ($h -eq [IntPtr]::Zero) { return @{ ok = $true; opened = 'browser'; state = 'not seen' } }
     SeeThrough $h $true
-    if ([IBailaWeb.Win]::IsIconic($h)) { $null = [IBailaWeb.Win]::ShowWindow($h, 4) }   # SW_SHOWNOACTIVATE
+    if ([IJWAWeb.Win]::IsIconic($h)) { $null = [IJWAWeb.Win]::ShowWindow($h, 4) }   # SW_SHOWNOACTIVATE
     GiveBack $front
     $target = @{ element = (Woken ([System.Windows.Automation.AutomationElement]::FromHandle($h)) $h); handle = $h }
     $state = 'minimized'
@@ -359,12 +359,12 @@ function Open($c) {
     # its minimized window, and shows nothing of a page that isn't playing.
     $target = $mine[0]
     $h = $target.handle
-    $state = if ([IBailaWeb.Win]::IsIconic($h)) { 'minimized' } elseif ($front -eq $h) { 'front' } else { 'behind' }
-    $aboveIt = [IBailaWeb.Win]::GetWindow($h, 3)
+    $state = if ([IJWAWeb.Win]::IsIconic($h)) { 'minimized' } elseif ($front -eq $h) { 'front' } else { 'behind' }
+    $aboveIt = [IJWAWeb.Win]::GetWindow($h, 3)
     if ($state -ne 'front') {
       SeeThrough $h $true
-      if ($state -eq 'minimized') { $null = [IBailaWeb.Win]::ShowWindow($h, 4) }   # SW_SHOWNOACTIVATE
-      $null = [IBailaWeb.Win]::SetWindowPos($h, [IntPtr]0, 0, 0, 0, 0, 0x0013)    # on top of the others, no keys
+      if ($state -eq 'minimized') { $null = [IJWAWeb.Win]::ShowWindow($h, 4) }   # SW_SHOWNOACTIVATE
+      $null = [IJWAWeb.Win]::SetWindowPos($h, [IntPtr]0, 0, 0, 0, 0, 0x0013)    # on top of the others, no keys
       Start-Sleep -Milliseconds 350
     }
     $target.element = Woken $target.element $h
@@ -388,8 +388,8 @@ function Open($c) {
           $filled = $true
           try { $bar.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue($url) } catch { $filled = $false }
           if (-not (FocusIn $bar)) {
-            [IBailaWeb.Win]::keybd_event(0x87, 0, 0, [IntPtr]::Zero); [IBailaWeb.Win]::keybd_event(0x87, 0, 2, [IntPtr]::Zero)
-            $null = [IBailaWeb.Win]::SetForegroundWindow($h)
+            [IJWAWeb.Win]::keybd_event(0x87, 0, 0, [IntPtr]::Zero); [IJWAWeb.Win]::keybd_event(0x87, 0, 2, [IntPtr]::Zero)
+            $null = [IJWAWeb.Win]::SetForegroundWindow($h)
             $bar.SetFocus()
           }
           # Keys only while the address bar has them: else the new tab below — never a key pressed elsewhere.
@@ -397,15 +397,15 @@ function Open($c) {
             # Opera's address field won't be set (E_FAIL, 2026-10-09): the address is typed into it instead, as
             # letters whatever the keyboard — all it held chosen and typed over, then what it offers to add after
             # the address (one from before) taken away.
-            [IBailaWeb.Win]::keybd_event(0x11, 0, 0, [IntPtr]::Zero); [IBailaWeb.Win]::keybd_event(0x41, 0, 0, [IntPtr]::Zero)
-            [IBailaWeb.Win]::keybd_event(0x41, 0, 2, [IntPtr]::Zero); [IBailaWeb.Win]::keybd_event(0x11, 0, 2, [IntPtr]::Zero)
-            [IBailaWeb.Win]::Type($url)
+            [IJWAWeb.Win]::keybd_event(0x11, 0, 0, [IntPtr]::Zero); [IJWAWeb.Win]::keybd_event(0x41, 0, 0, [IntPtr]::Zero)
+            [IJWAWeb.Win]::keybd_event(0x41, 0, 2, [IntPtr]::Zero); [IJWAWeb.Win]::keybd_event(0x11, 0, 2, [IntPtr]::Zero)
+            [IJWAWeb.Win]::Type($url)
             Start-Sleep -Milliseconds 80
-            [IBailaWeb.Win]::keybd_event(0x2E, 0, 0, [IntPtr]::Zero); [IBailaWeb.Win]::keybd_event(0x2E, 0, 2, [IntPtr]::Zero)
+            [IJWAWeb.Win]::keybd_event(0x2E, 0, 0, [IntPtr]::Zero); [IJWAWeb.Win]::keybd_event(0x2E, 0, 2, [IntPtr]::Zero)
             $filled = $true
           }
           if ($filled -and (FocusIn $bar)) {
-            [IBailaWeb.Win]::keybd_event(0x0D, 0, 0, [IntPtr]::Zero); [IBailaWeb.Win]::keybd_event(0x0D, 0, 2, [IntPtr]::Zero)
+            [IJWAWeb.Win]::keybd_event(0x0D, 0, 0, [IntPtr]::Zero); [IJWAWeb.Win]::keybd_event(0x0D, 0, 2, [IntPtr]::Zero)
             $how = 'its tab'
           }
         } catch { }
@@ -460,13 +460,13 @@ function Open($c) {
       if (([string]$hero.Current.Name).Trim().ToLowerInvariant() -match $Playing) { if (-not $pressed) { $pressed = 'already playing' }; break }
       if ($pressedAt -and ((Get-Date) - $pressedAt).TotalSeconds -lt 4) { continue }
       if ($presses -ge 2) { break }
-      # Pressed once: whether it started, Windows' word on what plays says (iBaila looks); the page's own button keeps
+      # Pressed once: whether it started, Windows' word on what plays says (iJWA looks); the page's own button keeps
       # saying Play on SoundCloud, and a second press would skip on.
       try { $hero.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke(); $pressed = [string]$hero.Current.Name; break } catch { }
     }
   }
 
-  # The page's own volume, turned full. A browser plays a page only as loud as the page's own slider, beneath iBaila's
+  # The page's own volume, turned full. A browser plays a page only as loud as the page's own slider, beneath iJWA's
   # volume and Windows' — low there, a song stayed quiet with both of those up (a friend's PC, 2026-10-09). The site's
   # own keys turn it up, ten presses reaching the top from anywhere: YouTube Music's "=", SoundCloud's Shift+Up
   # (measured in Edge: YouTube Music went from a fifth of full to full; its slider isn't there for UI Automation).
@@ -482,8 +482,8 @@ function Open($c) {
     }
     if ($page) {
       Start-Sleep -Milliseconds 1200   # its player made
-      [IBailaWeb.Win]::keybd_event(0x87, 0, 0, [IntPtr]::Zero); [IBailaWeb.Win]::keybd_event(0x87, 0, 2, [IntPtr]::Zero)
-      $null = [IBailaWeb.Win]::SetForegroundWindow($h)
+      [IJWAWeb.Win]::keybd_event(0x87, 0, 0, [IntPtr]::Zero); [IJWAWeb.Win]::keybd_event(0x87, 0, 2, [IntPtr]::Zero)
+      $null = [IJWAWeb.Win]::SetForegroundWindow($h)
       try { $page.SetFocus(); if (FocusIn $page) { [System.Windows.Forms.SendKeys]::SendWait($louder * 10) } } catch { }
       if ($state -ne 'front') { GiveBack $front }
     }
@@ -495,8 +495,8 @@ function Open($c) {
   if ($pressed -and $pressed -ne 'already playing' -and $state -ne 'front') { Start-Sleep -Milliseconds 3500 }
   # The browser goes back to where it was.
   if ($state -ne 'front') {
-    if ($state -eq 'minimized') { $null = [IBailaWeb.Win]::ShowWindow($h, 7) }   # SW_SHOWMINNOACTIVE
-    elseif ($aboveIt -and $aboveIt -ne [IntPtr]::Zero) { [IBailaWeb.Win]::PutUnder($h, $aboveIt) }   # under the window it was under, no keys
+    if ($state -eq 'minimized') { $null = [IJWAWeb.Win]::ShowWindow($h, 7) }   # SW_SHOWMINNOACTIVE
+    elseif ($aboveIt -and $aboveIt -ne [IntPtr]::Zero) { [IJWAWeb.Win]::PutUnder($h, $aboveIt) }   # under the window it was under, no keys
     Start-Sleep -Milliseconds 150
     SeeThrough $h $false
     # Minimized without letting go of the keyboard, a browser kept it: the next key the user pressed went to its hidden
@@ -593,7 +593,7 @@ function Press($c) {
   $site = [string]$c.site; $what = [string]$c.what
   $pattern = $Words[$what]
   if (-not $pattern) { return @{ ok = $false; error = 'unknown' } }
-  $front = [IBailaWeb.Win]::GetForegroundWindow()
+  $front = [IJWAWeb.Win]::GetForegroundWindow()
   $seen = @()
   foreach ($w in (Windows)) {
     # The page the window shows — a minimized window's too — is the site's? Else its tab is shown first, unless the
@@ -628,18 +628,18 @@ function Press($c) {
 # hidden page's media from loading until the page is first seen (the test machine, 2026-10-10: unstarted at 0:15 until
 # Opera was shown — minimized, and behind a maximized window alike). Its window shown unseen a moment — see-through,
 # letting clicks through, never taking the keys — the song loads at once; put back, it plays on (measured). Shown no
-# longer than asked, whatever becomes of iBaila meanwhile.
+# longer than asked, whatever becomes of iJWA meanwhile.
 function LetLoad($c) {
-  $front = [IBailaWeb.Win]::GetForegroundWindow()
-  $h = [IBailaWeb.Win]::BrowserWindowOf([string]$c.app, [string]$c.title)
+  $front = [IJWAWeb.Win]::GetForegroundWindow()
+  $h = [IJWAWeb.Win]::BrowserWindowOf([string]$c.app, [string]$c.title)
   if ($h -eq [IntPtr]::Zero) { return @{ ok = $true; shown = $false } }
   $ms = [Math]::Min([Math]::Max([int]$c.ms, 500), 6000)
-  if ([IBailaWeb.Win]::IsIconic($h)) {
+  if ([IJWAWeb.Win]::IsIconic($h)) {
     SeeThrough $h $true
-    $null = [IBailaWeb.Win]::ShowWindow($h, 4)   # SW_SHOWNOACTIVATE
+    $null = [IJWAWeb.Win]::ShowWindow($h, 4)   # SW_SHOWNOACTIVATE
     if (InFront $h) { GiveBack $front }
     Start-Sleep -Milliseconds $ms
-    $null = [IBailaWeb.Win]::ShowWindow($h, 7)   # SW_SHOWMINNOACTIVE
+    $null = [IJWAWeb.Win]::ShowWindow($h, 7)   # SW_SHOWMINNOACTIVE
     Start-Sleep -Milliseconds 150
     SeeThrough $h $false
     if (InFront $h) { GiveBack $front }
@@ -648,14 +648,14 @@ function LetLoad($c) {
   # Covered: raised over the others it stays unseen to Chromium (measured: see-through, even in the topmost band). As a
   # minimized one is, it is minimized and shown again, unseen — a window shown again is seen — then put back under the
   # window it was under.
-  $above = [IBailaWeb.Win]::SeenAbove($h)
+  $above = [IJWAWeb.Win]::SeenAbove($h)
   SeeThrough $h $true
-  $null = [IBailaWeb.Win]::ShowWindow($h, 7)   # SW_SHOWMINNOACTIVE
+  $null = [IJWAWeb.Win]::ShowWindow($h, 7)   # SW_SHOWMINNOACTIVE
   Start-Sleep -Milliseconds 150
-  $null = [IBailaWeb.Win]::ShowWindow($h, 4)   # SW_SHOWNOACTIVATE
+  $null = [IJWAWeb.Win]::ShowWindow($h, 4)   # SW_SHOWNOACTIVATE
   if (InFront $h) { GiveBack $front }
   Start-Sleep -Milliseconds $ms
-  if ($above -ne [IntPtr]::Zero) { [IBailaWeb.Win]::PutUnder($h, $above) }
+  if ($above -ne [IntPtr]::Zero) { [IJWAWeb.Win]::PutUnder($h, $above) }
   # The window the user was in in front again, whatever else came up meanwhile.
   if ($front -ne [IntPtr]::Zero -and $front -ne $h) { GiveBack $front }
   Start-Sleep -Milliseconds 100
@@ -666,10 +666,10 @@ function LetLoad($c) {
 # ---- the input ----
 
 Say @{ ready = $true }
-$stdin = if ($IBailaIn) { $IBailaIn } else { New-Object System.IO.StreamReader([Console]::OpenStandardInput()) }
+$stdin = if ($IJWAIn) { $IJWAIn } else { New-Object System.IO.StreamReader([Console]::OpenStandardInput()) }
 while ($true) {
   $text = $stdin.ReadLine()
-  if ($null -eq $text) { exit }   # iBaila is gone
+  if ($null -eq $text) { exit }   # iJWA is gone
   if (-not $text.Trim()) { continue }
   try { $c = $text | ConvertFrom-Json } catch { continue }
   $answer = $null

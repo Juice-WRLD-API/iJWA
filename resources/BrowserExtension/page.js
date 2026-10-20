@@ -1,5 +1,5 @@
 // What a music page is asked to do, run inside the page itself (its own world, where YouTube's player and SoundCloud's
-// buttons are). The same words the Mac's iBaila ran there by AppleScript (WebMusic.swift's javascript(for:on:)), so a
+// buttons are). The same words the Mac's iJWA ran there by AppleScript (WebMusic.swift's javascript(for:on:)), so a
 // page answers alike either way: "ok", "none" (nothing on it to press), "wait …" (not yet the page asked for),
 // "pressed:…", "playing:…". Each function is handed to the page whole: nothing outside it is seen there.
 
@@ -8,19 +8,19 @@
 export function pageAction(site, action, arg) {
   // Whether the page holds its song back: unseen, and its song never loaded — Chromium keeps a page that never played
   // from loading its media while it isn't seen; SoundCloud's makes none at all, its Play left disabled (2026-10-10).
-  // iBaila for Windows then shows a minimized window unseen a moment.
+  // iJWA for Windows then shows a minimized window unseen a moment.
   if (action === 'held') {
-    const m = window.__ibailaMedia || document.querySelector('video, audio');
+    const m = window.__ijwaMedia || document.querySelector('video, audio');
     return document.hidden && (!m || m.readyState === 0) ? 'held' : 'free';
   }
-  // iBaila's repeat (off, one, all): the page's own button pressed until it says that one (content/main.js holds it);
+  // iJWA's repeat (off, one, all): the page's own button pressed until it says that one (content/main.js holds it);
   // what it says then.
-  if (action === 'repeat') return window.__ibailaRepeat ? window.__ibailaRepeat(arg) : 'none';
+  if (action === 'repeat') return window.__ijwaRepeat ? window.__ijwaRepeat(arg) : 'none';
   // Spotify's Web Player: the page's own answers to the media keys (content/main.js holds them), else its own buttons
   // (data-testid, the same in every language); a page reached in the page itself, the music playing on.
   if (site === 'spotifyWeb') {
-    const own = window.__ibailaActions || {};
-    const media = window.__ibailaMedia;
+    const own = window.__ijwaActions || {};
+    const media = window.__ijwaMedia;
     const button = (id) => document.querySelector(`[data-testid="${id}"]`);
     const press = (id) => { const b = button(id); if (!b) return 'none'; b.click(); return 'ok'; };
     const plays = () => (media ? !media.paused : null);
@@ -42,8 +42,8 @@ export function pageAction(site, action, arg) {
         if (!media) return 'none';
         media.currentTime = arg; return 'ok';
       case 'volume':
-        if (window.__ibailaWant) window.__ibailaWant(arg);
-        if (window.__ibailaSlide && window.__ibailaSlide(arg)) return 'ok';
+        if (window.__ijwaWant) window.__ijwaWant(arg);
+        if (window.__ijwaSlide && window.__ijwaSlide(arg)) return 'ok';
         if (!media) return 'none';
         media.volume = arg; return 'ok';
       // Its own address changed the way its links change it: no new page, the song playing plays on.
@@ -76,7 +76,7 @@ export function pageAction(site, action, arg) {
         history.pushState({}, '', `/search/${encodeURIComponent(query)}/${tab}`);
         dispatchEvent(new PopStateEvent('popstate', { state: {} }));
         // Waited for as the page draws them, not by the clock: a tab no one sees has its clock slowed to a tick a
-        // second, and the results were waited for past iBaila's patience (2026-10-10).
+        // second, and the results were waited for past iJWA's patience (2026-10-10).
         const pick = await new Promise((done) => {
           const found = results();
           if (found) return done(found);
@@ -85,7 +85,7 @@ export function pageAction(site, action, arg) {
           setTimeout(() => { watch.disconnect(); done(results()); }, 7000);
         });
         if (pick) return new URL(pick.getAttribute('href'), location.origin).href;
-        // What the page held instead, for iBaila's log.
+        // What the page held instead, for iJWA's log.
         const seen = [...document.querySelectorAll(`a[href*="${path}"]`)];
         const main = document.querySelector('main');
         const rows = document.querySelectorAll('[role="row"], [data-encore-id="card"], [data-testid*="card" i]').length;
@@ -100,7 +100,7 @@ export function pageAction(site, action, arg) {
         if (!list || !track) return 'none';
         const pause = (ms) => new Promise((done) => setTimeout(done, ms));
         const player = () => {
-          const kept = window.__ibailaPlayer;
+          const kept = window.__ijwaPlayer;
           if (kept && typeof kept.play === 'function') return kept;
           const root = document.querySelector('#main') || document.body;
           let fiber = null;
@@ -114,7 +114,7 @@ export function pageAction(site, action, arg) {
           for (let n = 0; stack.length && n < 20000; n++) {
             const f = stack.pop();
             const api = f.memoizedProps && f.memoizedProps.playerAPI;
-            if (api && typeof api.play === 'function') return (window.__ibailaPlayer = api);
+            if (api && typeof api.play === 'function') return (window.__ijwaPlayer = api);
             if (f.sibling) stack.push(f.sibling);
             if (f.child) stack.push(f.child);
           }
@@ -177,15 +177,15 @@ export function pageAction(site, action, arg) {
     switch (action) {
       case 'play': if (p && p.playVideo) { p.playVideo(); return 'ok'; } if (!v) return 'none'; v.play(); return 'ok';
       case 'pause': if (p && p.pauseVideo) { p.pauseVideo(); return 'ok'; } if (!v) return 'none'; v.pause(); return 'ok';
-      // A song iBaila starts is never muted; how loud it plays is the page's own setting, which iBaila's volume shows.
+      // A song iJWA starts is never muted; how loud it plays is the page's own setting, which iJWA's volume shows.
       case 'start':
         if (p && p.playVideo) { if (p.unMute) p.unMute(); p.playVideo(); return 'ok'; }
         if (!v) return 'none';
         v.muted = false; v.play(); return 'ok';
-      // iBaila's volume (0…1) is the page's own: YouTube Music's slider (content/main.js moves it), else the player's.
+      // iJWA's volume (0…1) is the page's own: YouTube Music's slider (content/main.js moves it), else the player's.
       case 'volume':
-        if (window.__ibailaWant) window.__ibailaWant(arg);
-        if (window.__ibailaSlide && window.__ibailaSlide(arg)) return 'ok';
+        if (window.__ijwaWant) window.__ijwaWant(arg);
+        if (window.__ijwaSlide && window.__ijwaSlide(arg)) return 'ok';
         if (p && p.setVolume) { if (p.unMute) p.unMute(); p.setVolume(Math.round(arg * 100)); return 'ok'; }
         if (!v) return 'none';
         v.muted = false; v.volume = arg; return 'ok';
@@ -297,13 +297,13 @@ export function pageAction(site, action, arg) {
     return wave() === 'waveform' ? 'waveform' : seen();
   };
 
-  // iBaila's volume (0…1): the player's, and kept for the next song's player (content/main.js).
+  // iJWA's volume (0…1): the player's, and kept for the next song's player (content/main.js).
   if (action === 'volume') {
-    if (window.__ibailaWant) window.__ibailaWant(arg);
+    if (window.__ijwaWant) window.__ijwaWant(arg);
     // SoundCloud's own slider (content/main.js), else its audio.
-    if (window.__ibailaSlide && window.__ibailaSlide(arg)) return 'ok';
-    window.__ibailaVolume = arg;
-    const m = window.__ibailaMedia;
+    if (window.__ijwaSlide && window.__ijwaSlide(arg)) return 'ok';
+    window.__ijwaVolume = arg;
+    const m = window.__ijwaMedia;
     if (!m) return 'none';
     m.muted = false;
     m.volume = arg;
@@ -312,7 +312,7 @@ export function pageAction(site, action, arg) {
 
   // The page's own answers to the media keys, when it gave them (content/main.js holds them): what the Mac's and
   // Windows' media keys reach.
-  const own = window.__ibailaActions || {};
+  const own = window.__ijwaActions || {};
   const answer = { play: 'play', pause: 'pause', next: 'nexttrack', previous: 'previoustrack' }[action];
   if (answer && own[answer]) { own[answer]({ action: answer }); return 'ok'; }
   if (action === 'seek' && own.seekto) { own.seekto({ action: 'seekto', seekTime: arg, fastSeek: false }); return 'ok'; }
@@ -328,10 +328,10 @@ export function pageAction(site, action, arg) {
     }
     case 'next': { const b = bar.find((x) => has(x, 'next')); if (!b) return 'none'; press(b); return 'ok'; }
     case 'previous': { const b = bar.find((x) => has(x, 'previous') || has(x, 'prev')); if (!b) return 'none'; press(b); return 'ok'; }
-    case 'seek': { const m = window.__ibailaMedia; if (!m) return 'none'; m.currentTime = arg; return 'ok'; }
+    case 'seek': { const m = window.__ijwaMedia; if (!m) return 'none'; m.currentTime = arg; return 'ok'; }
     // SoundCloud is one page that changes its own address: a link it follows itself keeps it playing on.
     case 'go': { const a = document.createElement('a'); a.href = arg; document.body.appendChild(a); a.click(); a.remove(); return 'ok'; }
-    // The page's own big play, unless it plays already (how loud: iBaila's volume, the page's own).
+    // The page's own big play, unless it plays already (how loud: iJWA's volume, the page's own).
     case 'start': {
       const want = arg ? String(arg).replace(/\/$/, '') : null;
       if (want && location.pathname.replace(/\/$/, '') !== want) return 'wait ' + location.pathname.slice(0, 40);

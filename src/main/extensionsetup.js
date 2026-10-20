@@ -1,4 +1,4 @@
-// iBaila's browser extension from the player's side (ExtensionSetup.swift): whether it still has to be added, and
+// iJWA's browser extension from the player's side (ExtensionSetup.swift): whether it still has to be added, and
 // adding it. A browser's music without it is only heard — playing what is picked, the lists, the heart and repeat all
 // go through it — so for someone listening in a browser it isn't a choice, and the player asks for it in its middle
 // until it's there (his call, 2026-10-10: "optional değil, kurması lazım").
@@ -40,7 +40,7 @@ class ExtensionSetup extends EventEmitter {
     extension.on('links', () => this.heard(extension.browsers()));
     nowPlaying.on('state', () => this.changed());
     if (this.known) { this.checked = true; return; }
-    // Added before iBaila kept count (1.6), or in a browser not open now: its profile says so.
+    // Added before iJWA kept count (1.6), or in a browser not open now: its profile says so.
     this.listed().then((found) => {
       if (found) this.know();
       this.checked = true;
@@ -95,7 +95,7 @@ class ExtensionSetup extends EventEmitter {
     this.changed();
   }
 
-  /** The folder iBaila keeps for it shown, selected, to be dragged; the browser's extensions page's address ready to
+  /** The folder iJWA keeps for it shown, selected, to be dragged; the browser's extensions page's address ready to
    *  paste. */
   add() {
     const { shell, clipboard } = require('electron');

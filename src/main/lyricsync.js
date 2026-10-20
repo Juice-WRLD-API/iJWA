@@ -1,6 +1,6 @@
 // Untimed words (Genius's) timed to the song itself, on this computer (his ask, 2026-10-12: leaks' lyrics on time, with
 // no paid service, on Mac and Windows alike). A port of LyricsSync.swift. The song's sound is had from its page
-// (extension.audio), heard by Whisper — whisper.cpp, run as iBaila's own helper, with a model the user chose to
+// (extension.audio), heard by Whisper — whisper.cpp, run as iJWA's own helper, with a model the user chose to
 // download — and the words heard are matched in order to the lyrics (lyricsync-align.js, the Mac's matching to the
 // letter). The result is kept (syncedlyrics.js): from then on the song's words come timed.
 //
@@ -72,7 +72,7 @@ async function time(lyrics, page = undefined) {
   if (!lines.length) return { why: 'no words' };
   const { samples, why } = await require('./extension').extension.audio(page);
   if (!samples) return { why };
-  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'ibaila-sync-'));
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'ijwa-sync-'));
   try {
     const sound = path.join(folder, 'song.wav');
     fs.writeFileSync(sound, wav(samples));
@@ -142,10 +142,10 @@ async function hear(file, folder, name = 'heard', offset = 0) {
   }
   return heard(['-ng']);
 }
-/** The graphics card failed Whisper once: not tried again until iBaila starts again. */
+/** The graphics card failed Whisper once: not tried again until iJWA starts again. */
 let gpuFailed = false;
 
-/** Where someone sings in the sound in `file`, by Silero's voice detector (shipped with iBaila, 0.9 MB): it misses much
+/** Where someone sings in the sound in `file`, by Silero's voice detector (shipped with iJWA, 0.9 MB): it misses much
  *  singing, but tells a lone beat from a voice — where the words Whisper couldn't make out may go. */
 async function voices(file) {
   const vad = helper('whisper-vad-speech-segments.exe');

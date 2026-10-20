@@ -1,4 +1,4 @@
-// Plays the user's own songs — the folders they made playlists — in iBaila itself (FilePlayer.swift): the app
+// Plays the user's own songs — the folders they made playlists — in iJWA itself (FilePlayer.swift): the app
 // playing elsewhere pauses first. A folder plays in its own order or shuffled, and every change is told to NowPlaying
 // the way the apps' own players tell Windows theirs, with where the song is exact from the player itself. The sound
 // is made in a window never shown (player/player.html).
@@ -41,7 +41,7 @@ class FilePlayer {
     if (this.window && !this.window.isDestroyed()) return Promise.resolve(this.window);
     if (this.opening) return this.opening;
     this.opening = new Promise((resolve) => {
-      openShared('ibaila://app/player/player.html', { ...TOOL, show: false, title: 'iBaila', skipTaskbar: true,
+      openShared('ijwa://app/player/player.html', { ...TOOL, show: false, title: 'iJWA', skipTaskbar: true,
         webPreferences: { preload: this.preload, backgroundThrottling: false, contextIsolation: true, autoplayPolicy: 'no-user-gesture-required' } }, (win) => {
         this.window = win;
         win.on('closed', () => { if (this.window === win) this.window = null; });
@@ -92,7 +92,7 @@ class FilePlayer {
     this.tell(true);
     const win = await this.host();
     if (this.loadedID !== id) return;
-    win.webContents.send('player-load', { id, url: `ibaila://app/song/${encodeURIComponent(song.id)}`, play, position,
+    win.webContents.send('player-load', { id, url: `ijwa://app/song/${encodeURIComponent(song.id)}`, play, position,
       song: { title: song.title, artist: song.artist, album: song.album, art: song.artworkFile ? artwork.url(song.artworkFile) : null } });
   }
 
@@ -124,7 +124,7 @@ class FilePlayer {
   tell(withPicture) {
     const song = this.song;
     if (!song) return;
-    this.nowPlaying.update({ fromFiles: true, playKey: `file:${song.id}`, title: song.title, artist: song.artist, album: song.album, app: 'iBaila',
+    this.nowPlaying.update({ fromFiles: true, playKey: `file:${song.id}`, title: song.title, artist: song.artist, album: song.album, app: 'iJWA',
       playing: this.playing, position: this.position, duration: this.duration, shuffle: this.shuffle,
       repeat: { off: 'None', one: 'Track', all: 'List' }[this.repeat],
       can: { next: true, previous: true, seek: true, shuffle: true, repeat: true } }, withPicture ? this.picture : null);

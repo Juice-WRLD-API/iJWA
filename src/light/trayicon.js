@@ -1,4 +1,4 @@
-// iBaila's icon by the clock (DockIcon.swift's look): the playing song's artwork, rounded or round, in a ring of the
+// iJWA's icon by the clock (DockIcon.swift's look): the playing song's artwork, rounded or round, in a ring of the
 // light's two colors that can glow and, in Music Sync, beat with the music. Drawn here, in the hidden audio window, at
 // each size Windows may show it; the app sets it.
 import { DEFAULT_STYLE, hsbToRgb, paletteFromPixels } from './engine.js';

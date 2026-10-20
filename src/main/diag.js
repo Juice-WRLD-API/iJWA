@@ -1,5 +1,5 @@
 // The test machine's hooks: it writes a step into diag.txt beside the settings — a window's state, a pick played on the
-// web or in Apple Music, a place chosen, the list's state — and iBaila does it and says so in its log. Installed only
+// web or in Apple Music, a place chosen, the list's state — and iJWA does it and says so in its log. Installed only
 // where that file is already there (main.js), so never on a user's PC.
 const { app, BrowserWindow, screen } = require('electron');
 const fs = require('fs');
@@ -11,7 +11,7 @@ function install(desktop) {
   // Every picture a player hands Windows, kept as it came, to see what a browser sends before the page's own cover.
   const pictures = path.join(app.getPath('userData'), 'pictures');
   fs.mkdirSync(pictures, { recursive: true });
-  global.ibailaKeepPicture = (track, bytes) => {
+  global.ijwaKeepPicture = (track, bytes) => {
     try { fs.writeFileSync(path.join(pictures, `${Date.now()}-${String(track.title).replace(/[^\w]+/g, '_').slice(0, 30)}.img`), bytes); } catch { /* full */ }
   };
   let last = '';
@@ -28,7 +28,7 @@ function install(desktop) {
         console.log('[probe] accessibility now', app.isAccessibilitySupportEnabled(), '| cursor', JSON.stringify(screen.getCursorScreenPoint()));
         for (const w of BrowserWindow.getAllWindows()) {
           const wc = w.webContents;
-          console.log('[probe] window', w.id, wc.getURL().replace('ibaila://app/', ''), JSON.stringify(w.getBounds()), 'visible', w.isVisible(),
+          console.log('[probe] window', w.id, wc.getURL().replace('ijwa://app/', ''), JSON.stringify(w.getBounds()), 'visible', w.isVisible(),
             'focusable', w.isFocusable(), 'enabled', w.isEnabled(), 'focused', w.isFocused(), 'top', w.isAlwaysOnTop(), 'crashed', wc.isCrashed(),
             'pid', wc.getOSProcessId());
         }
@@ -42,7 +42,7 @@ function install(desktop) {
         const pages = new Map();
         for (const w of BrowserWindow.getAllWindows()) {
           const pid = w.webContents.getOSProcessId();
-          pages.set(pid, [...(pages.get(pid) || []), w.webContents.getURL().replace('ibaila://app/', '')]);
+          pages.set(pid, [...(pages.get(pid) || []), w.webContents.getURL().replace('ijwa://app/', '')]);
         }
         let total = 0;
         for (const m of app.getAppMetrics()) {
@@ -73,7 +73,7 @@ function install(desktop) {
             if (!wc.debugger.isAttached()) wc.debugger.attach('1.3');
             await wc.debugger.sendCommand('HeapProfiler.collectGarbage');
             wc.debugger.detach();
-            console.log('[probe] gc', wc.getURL().replace('ibaila://app/', ''));
+            console.log('[probe] gc', wc.getURL().replace('ijwa://app/', ''));
           } catch (error) { console.log('[probe] gc failed', error.message); }
         }
       } else if (step === 'memdump') {
@@ -97,7 +97,7 @@ function install(desktop) {
             videos: [...document.querySelectorAll('video')].map((v) => v.videoWidth + 'x' + v.videoHeight + (v.paused ? ' paused' : ' playing')),
             filters: [...document.querySelectorAll('*')].filter((e) => { const s = getComputedStyle(e); return s.backdropFilter !== 'none' || s.filter !== 'none'; }).length,
           })`).catch((e) => e.message);
-          console.log('[probe] heap', w.webContents.getURL().replace('ibaila://app/', ''), page);
+          console.log('[probe] heap', w.webContents.getURL().replace('ijwa://app/', ''), page);
         }
       } else if (step === 'eval') {
         // eval <part of the page's address> <script…> <nonce>: the script run in that page, its answer logged.
@@ -172,18 +172,18 @@ function install(desktop) {
         for (let i = 0; i < 180; i++) { ipcMain.emit('set-style', {}, { desktop: { size: 0.45 + 0.4 * Math.sin(i / 6) } }); await new Promise((r) => setTimeout(r, 16)); }
         for (let i = 0; i < 10; i++) { console.log('[probe] after the slider', i * 400, 'ms:', await look()); await new Promise((r) => setTimeout(r, 400)); }
       } else if (step === 'now') {
-        // What iBaila follows now, and the choice.
+        // What iJWA follows now, and the choice.
         const np = desktop.nowPlaying;
         console.log('[probe] now', JSON.stringify({ choice: np.choice, track: np.track && { title: np.track.title, source: np.track.source, site: np.track.site }, playing: np.playing }));
       } else if (step === 'trace') {
         // trace <seconds> <nonce>: every reading of the player for that long — whether it plays, where Windows says it
-        // stands — beside where iBaila's own clock says the song is.
+        // stands — beside where iJWA's own clock says the song is.
         const t0 = Date.now();
-        global.ibailaTrace = (data, np) => {
+        global.ijwaTrace = (data, np) => {
           const t = ((Date.now() - t0) / 1000).toFixed(1);
           if (data.title) console.log('[probe] trace', t, 's | reads', data.playing ? 'playing' : 'paused', 'at', data.position, '| clock', np.clock ? np.clockSeconds(Date.now() / 1000).toFixed(1) : '-', np.clock?.running ? 'running' : 'stopped');
         };
-        setTimeout(() => { global.ibailaTrace = null; }, Number(text.split(/\s+/)[1] || 20) * 1000);
+        setTimeout(() => { global.ijwaTrace = null; }, Number(text.split(/\s+/)[1] || 20) * 1000);
       } else if (step === 'press-play') {
         // The bar's Play pressed, as the page sends it.
         require('electron').ipcMain.emit('desk-control', {}, 'toggle');
@@ -191,7 +191,7 @@ function install(desktop) {
       } else if (step === 'frost') {
         // The frost's color in its middle, as the pages get it.
         const page = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().includes('desktop.html'));
-        console.log('[probe] frost', await page.webContents.executeJavaScript(`(async () => { const r = await fetch('ibaila://app/frost.jpg'); if (!r.ok) return 'none ' + r.status;
+        console.log('[probe] frost', await page.webContents.executeJavaScript(`(async () => { const r = await fetch('ijwa://app/frost.jpg'); if (!r.ok) return 'none ' + r.status;
           const b = await createImageBitmap(await r.blob()); const c = new OffscreenCanvas(8, 8); const g = c.getContext('2d'); g.drawImage(b, 0, 0, 8, 8);
           return b.width + 'x' + b.height + ' rgb ' + [...g.getImageData(4, 4, 1, 1).data].slice(0, 3).join(','); })()`).catch((e) => e.message));
       } else if (step === 'slidertest') {

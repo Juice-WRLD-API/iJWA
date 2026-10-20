@@ -1,6 +1,6 @@
 // Words timed on this computer from the song itself (lyricsync.js), kept by song: once timed, a song's words are sung
 // on time from then on — word by word, each at its own moment. What was heard is kept beside them, so another version
-// of the words is timed again at once, without listening again. A port of SyncedLyrics in iBaila's GeniusLyrics.swift.
+// of the words is timed again at once, without listening again. A port of SyncedLyrics in iJWA's GeniusLyrics.swift.
 'use strict';
 
 const fs = require('fs');

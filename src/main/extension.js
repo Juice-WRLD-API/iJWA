@@ -1,5 +1,5 @@
-// iBaila's browser extension (~/IBAILAEXT, the same one as the Mac's), in Chrome, Edge, Opera and the browsers made from
-// Chrome (BrowserExtension.swift). It finds iBaila at a port of this computer only, and does what iBaila asks with the
+// iJWA's browser extension (~/IJWAEXT, the same one as the Mac's), in Chrome, Edge, Opera and the browsers made from
+// Chrome (BrowserExtension.swift). It finds iJWA at a port of this computer only, and does what iJWA asks with the
 // browser's YouTube Music, SoundCloud and Spotify Web Player tabs: lists them, sends one to a page, opens one, has a page
 // play, pause, skip, start or set its loudness — inside the browser, so nothing comes forward and no keys are typed —
 // and reads the user's own lists there. Each page tells what it plays itself. A browser without it is worked as before
@@ -14,9 +14,9 @@ const { EventEmitter } = require('events');
 
 /** The extension's IDs: the one it has while being made (its manifest's key); the store's joins it once there. */
 const IDS = new Set(['gigknfcahepjbpbbenehclomobbhnoih']);
-/** Where iBaila waits, the second should another app hold the first; the extension tries both. A test's copy of the
- *  extension is met elsewhere (IBAILA_EXTENSION_PORT), never by the iBaila in use. */
-const PORTS = process.env.IBAILA_EXTENSION_PORT ? [Number(process.env.IBAILA_EXTENSION_PORT)] : [47823, 47824];
+/** Where iJWA waits, the second should another app hold the first; the extension tries both. A test's copy of the
+ *  extension is met elsewhere (IJWA_EXTENSION_PORT), never by the iJWA in use. */
+const PORTS = process.env.IJWA_EXTENSION_PORT ? [Number(process.env.IJWA_EXTENSION_PORT)] : [47823, 47824];
 /** Windows' names for a browser's media session ("Chrome", "MSEdge", …) by the extension's for it. */
 const SESSION_NAMES = { chrome: /chrome/i, edge: /msedge|edge/i, opera: /opera/i, brave: /brave/i, vivaldi: /vivaldi/i };
 
@@ -29,7 +29,7 @@ class BrowserExtension extends EventEmitter {
   followed = null;        // { browser, tab, site }: the tab whose song is followed
   states = new Map();     // "browser|tab" → its last word
   loudness = null;
-  latest = null;          // the version iBaila brings, told to the extension
+  latest = null;          // the version iJWA brings, told to the extension
   heardTitle = '';
   lastAd = '';
   dropTimer = null;
@@ -44,10 +44,10 @@ class BrowserExtension extends EventEmitter {
 
   // ---- the copy the browser loads ----
 
-  /** Where the browser loads the extension from, when added by hand (not from the store): a folder iBaila keeps and
-   *  writes again whenever this iBaila brings another version of it, so updating iBaila updates the extension too. */
+  /** Where the browser loads the extension from, when added by hand (not from the store): a folder iJWA keeps and
+   *  writes again whenever this iJWA brings another version of it, so updating iJWA updates the extension too. */
   static get folder() {
-    if (process.env.IBAILA_EXTENSION_FOLDER) return process.env.IBAILA_EXTENSION_FOLDER;
+    if (process.env.IJWA_EXTENSION_FOLDER) return process.env.IJWA_EXTENSION_FOLDER;
     return path.join(require('electron').app.getPath('userData'), 'Browser Extension');
   }
 
@@ -88,7 +88,7 @@ class BrowserExtension extends EventEmitter {
     this.server = server;
   }
 
-  /** Only iBaila's own extension: a page — or another extension — asking for the port is turned away. */
+  /** Only iJWA's own extension: a page — or another extension — asking for the port is turned away. */
   accept(request, socket) {
     const origin = request.headers.origin || '';
     const key = request.headers['sec-websocket-key'];

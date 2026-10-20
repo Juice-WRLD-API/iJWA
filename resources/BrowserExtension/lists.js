@@ -1,6 +1,6 @@
 // The user's own lists on a music site — their playlists, and the songs they liked — read inside the site's page, the
 // way the page itself reads them: signed in there, nothing more is asked of the user, and nothing leaves this computer
-// but for iBaila. And the song playing liked or not, as the page's own heart does. Handed to the page whole
+// but for iJWA. And the song playing liked or not, as the page's own heart does. Handed to the page whole
 // (chrome.scripting): nothing outside the function is seen there.
 //
 // ask: { what: 'library' } → { signedIn, lists: [{ id, name, count, artwork, owner }] }
@@ -10,7 +10,7 @@
 
 export async function pageLists(site, ask) {
   // A question that failed on the way — the site said no, or answered otherwise than read — says why, instead of
-  // nothing at all: iBaila's log had only "no answer" for SoundCloud's likes (2026-10-10).
+  // nothing at all: iJWA's log had only "no answer" for SoundCloud's likes (2026-10-10).
   try { return await answer(); } catch (e) { return { error: String((e && e.message) || e).slice(0, 160) }; }
 
   async function answer() {
@@ -28,10 +28,10 @@ export async function pageLists(site, ask) {
     const seconds = (clock) => String(clock || '').split(':').reduce((sum, part) => sum * 60 + (Number(part) || 0), 0);
     const cookie = (name, doc = document) => { const m = doc.cookie.match(new RegExp('(?:^|; )' + name.replace(/[$.*+?^()[\]{}|\\]/g, '\\$&') + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : null; };
     // What the extension's watch of the page heard (content/main.js): Spotify's and SoundCloud's own keys to their lists.
-    const heard = window.__ibailaHeard || {};
+    const heard = window.__ijwaHeard || {};
     // Heard by the time the page next asks its site anything — at most `ms` from now.
     const hear = (has, ms) => (has() ? Promise.resolve(true) : new Promise((done) => {
-      const waiters = (window.__ibailaHeardWaiters = window.__ibailaHeardWaiters || []);
+      const waiters = (window.__ijwaHeardWaiters = window.__ijwaHeardWaiters || []);
       const check = () => { if (has()) { done(true); return true; } return false; };
       waiters.push(check);
       setTimeout(() => done(has()), ms);
@@ -44,7 +44,7 @@ export async function pageLists(site, ask) {
     // playlists came back none and its liked songs empty (his Chrome, 2026-10-10).
     if (site === 'spotifyWeb') {
       const inside = (() => {
-        let platform = window.__ibailaPlatform;
+        let platform = window.__ijwaPlatform;
         if (!platform) {
           const root = [...document.querySelectorAll('body *')].find((e) => Object.keys(e).some((k) => k.startsWith('__reactContainer')));
           const stack = root ? [root[Object.keys(root).find((k) => k.startsWith('__reactContainer'))]] : [];
@@ -55,7 +55,7 @@ export async function pageLists(site, ask) {
             if (f.child) stack.push(f.child);
             if (f.sibling) stack.push(f.sibling);
           }
-          if (platform) window.__ibailaPlatform = platform;
+          if (platform) window.__ijwaPlatform = platform;
         }
         if (!platform) return null;
         const api = (name) => { let key = null; platform.getRegistry()._map.forEach((v, k) => { if (k.description === name) key = k; }); return key ? platform.getRegistry().resolve(key) : null; };
@@ -76,7 +76,7 @@ export async function pageLists(site, ask) {
         const library = inside.api('LibraryAPI'), rootlist = inside.api('RootlistAPI'), playlists = inside.api('PlaylistAPI');
         if (!library || !rootlist || !playlists) return null;
         if (ask.what === 'library') {
-          // A guest's page — not signed in to Spotify in this browser — said so, for iBaila to ask them to sign in: its
+          // A guest's page — not signed in to Spotify in this browser — said so, for iJWA to ask them to sign in: its
           // empty library was taken for one with only Liked Songs in it, and a customer was shown that alone (2026-10-14).
           if (inside.guest()) return { signedIn: false, lists: [] };
           const liked = await library.getTracks({ offset: 0, limit: 1 });
@@ -164,7 +164,7 @@ export async function pageLists(site, ask) {
       // for, else the one the page's player plays.
       if (ask.what === 'liked' || ask.what === 'like') {
         const playing = () => {
-          let api = window.__ibailaPlayer;
+          let api = window.__ijwaPlayer;
           if (!api) {
             const root = document.querySelector('#main') || document.body;
             let fiber = null;
@@ -177,7 +177,7 @@ export async function pageLists(site, ask) {
             for (let n = 0; stack.length && n < 20000 && !api; n++) {
               const f = stack.pop();
               const found = f.memoizedProps && f.memoizedProps.playerAPI;
-              if (found && typeof found.play === 'function') api = window.__ibailaPlayer = found;
+              if (found && typeof found.play === 'function') api = window.__ijwaPlayer = found;
               if (f.sibling) stack.push(f.sibling);
               if (f.child) stack.push(f.child);
             }

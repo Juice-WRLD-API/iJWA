@@ -1,8 +1,8 @@
-// iBaila's word with this browser. iBaila — the app on this computer, Mac or PC — waits at a port on this computer
+// iJWA's word with this browser. iJWA — the app on this computer, Mac or PC — waits at a port on this computer
 // only; this finds it, says which browser it is, and does what it asks with the browser's YouTube Music and
 // SoundCloud tabs (and Spotify's Web Player): lists them, sends one to a page, opens one, has a page play, pause, skip or start (page.js),
-// and reads the user's own lists there for iBaila's playlist (lists.js).
-// Nothing else of the browser is seen or touched. iBaila not running, it is looked for again every half minute.
+// and reads the user's own lists there for iJWA's playlist (lists.js).
+// Nothing else of the browser is seen or touched. iJWA not running, it is looked for again every half minute.
 import { pageAction, pageSong } from './page.js';
 import { pageLists } from './lists.js';
 import { pageQueue } from './queue.js';
@@ -12,12 +12,12 @@ const PORTS = [47823, 47824];
 const SITES = [
   { site: 'youTubeMusic', hosts: ['music.youtube.com'] },
   { site: 'soundCloud', hosts: ['soundcloud.com', 'm.soundcloud.com'] },
-  // Spotify's Web Player in the browser — not Spotify's app, which iBaila follows on its own.
+  // Spotify's Web Player in the browser — not Spotify's app, which iJWA follows on its own.
   { site: 'spotifyWeb', hosts: ['open.spotify.com'] },
 ];
 const PATTERNS = SITES.flatMap((s) => s.hosts.map((host) => `*://${host}/*`));
 
-/** The browser this is, by the name iBaila knows it. */
+/** The browser this is, by the name iJWA knows it. */
 function browserName() {
   const agent = navigator.userAgent;
   if (/\bEdg\//.test(agent)) return 'edge';
@@ -34,29 +34,29 @@ function siteOf(url) {
   } catch { return null; }
 }
 
-// ---- iBaila ----
+// ---- iJWA ----
 
 let socket = null;
 let connecting = false;
 
-/** Looks for iBaila at its ports, one after another. */
+/** Looks for iJWA at its ports, one after another. */
 function connect(index = 0) {
   if (socket || connecting) return;
   connecting = true;
   let ws;
-  try { ws = new WebSocket(`ws://127.0.0.1:${PORTS[index]}/ibaila`); } catch { connecting = false; return; }
+  try { ws = new WebSocket(`ws://127.0.0.1:${PORTS[index]}/ijwa`); } catch { connecting = false; return; }
   ws.onopen = () => {
     connecting = false;
     socket = ws;
     send({ hello: { browser: browserName(), version: chrome.runtime.getManifest().version } });
-    // What each page plays: iBaila has just come (or come back) — and a paused page says nothing by itself.
+    // What each page plays: iJWA has just come (or come back) — and a paused page says nothing by itself.
     for (const state of states.values()) send(state);
     askPages();
   };
   ws.onmessage = (event) => {
     let message;
     try { message = JSON.parse(event.data); } catch { return; }
-    // iBaila's pings only keep this awake: a message heard holds the browser from putting it to sleep.
+    // iJWA's pings only keep this awake: a message heard holds the browser from putting it to sleep.
     if (message.id != null) answer(message);
     if (message.latest) freshen(message.latest);
   };
@@ -85,9 +85,9 @@ async function answer(message) {
 
 // ---- kept up to date ----
 
-// Added by hand (not from the store), the extension is read from its folder only as the browser starts it: iBaila
+// Added by hand (not from the store), the extension is read from its folder only as the browser starts it: iJWA
 // updated, a newer copy lay in the folder while this one ran on — and couldn't see Spotify's Web Player, which the newer
-// one could (2026-10-10). iBaila, which writes that folder, says which version lies there; newer than this one, it
+// one could (2026-10-10). iJWA, which writes that folder, says which version lies there; newer than this one, it
 // starts itself again into it — once for each version, and never one the store keeps up to date itself.
 const newer = (a, b) => {
   const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number);
@@ -108,7 +108,7 @@ async function freshen(latest) {
 /** The browser's YouTube Music and SoundCloud tabs: the one playing first, then the ones shown, the latest first. */
 async function musicTabs() {
   const [tabs, windows] = await Promise.all([chrome.tabs.query({ url: PATTERNS }), chrome.windows.getAll().catch(() => [])]);
-  // A page in a minimized window that never played holds its song back until it's seen (iBaila for Windows shows such a
+  // A page in a minimized window that never played holds its song back until it's seen (iJWA for Windows shows such a
   // window unseen a moment).
   const minimized = new Set(windows.filter((w) => w.state === 'minimized').map((w) => w.id));
   return tabs
@@ -170,7 +170,7 @@ async function handle(m) {
         await chrome.tabs.update(m.tab, { url: m.url });
         return { ok: true, tab: m.tab };
       }
-      // Opened only to read the user's lists in (iBaila's playlist shelf): a tab behind the one shown, the window
+      // Opened only to read the user's lists in (iJWA's playlist shelf): a tab behind the one shown, the window
       // left as it is; with no window, a new one, minimized.
       if (m.background) {
         const last = await chrome.windows.getLastFocused({ windowTypes: ['normal'] }).catch(() => null);
@@ -200,7 +200,7 @@ async function handle(m) {
 async function askPages() {
   for (const tab of await musicTabs()) {
     const results = await chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, world: 'MAIN',
-      func: () => (window.__ibailaNow ? window.__ibailaNow() : null) }).catch(() => []);
+      func: () => (window.__ijwaNow ? window.__ijwaNow() : null) }).catch(() => []);
     const now = results.map((r) => r.result).find(Boolean);
     if (!now) continue;
     const state = { event: 'state', tab: tab.id, ...now };
@@ -209,7 +209,7 @@ async function askPages() {
   }
 }
 
-/** Each music tab's last word on what it plays (content/main.js), passed on to iBaila as it comes. */
+/** Each music tab's last word on what it plays (content/main.js), passed on to iJWA as it comes. */
 const states = new Map();
 
 /** Each site's loudness as last told, kept for its next page (content/main.js applies it). */
@@ -233,11 +233,11 @@ chrome.tabs.onUpdated.addListener((tab, change) => {
 
 // ---- awake ----
 
-chrome.alarms.create('ibaila', { periodInMinutes: 0.5 });
+chrome.alarms.create('ijwa', { periodInMinutes: 0.5 });
 chrome.alarms.onAlarm.addListener(() => connect());
 chrome.runtime.onStartup.addListener(() => connect());
 // Installed or updated: the music tabs already open still hold the old extension's word-passer, cut off — they told
-// iBaila nothing until reloaded (2026-10-09). A new one goes into each, and the page's own listener (main.js) where it
+// iJWA nothing until reloaded (2026-10-09). A new one goes into each, and the page's own listener (main.js) where it
 // has none yet — a site the old one didn't know; where it has one, that one carries on.
 chrome.runtime.onInstalled.addListener(async () => {
   connect();
@@ -247,6 +247,6 @@ chrome.runtime.onInstalled.addListener(async () => {
     chrome.scripting.executeScript({ target, files: ['content/bridge.js'] }).catch(() => {});
   }
 });
-// A music tab starting or stopping wakes it too: iBaila is looked for at once.
+// A music tab starting or stopping wakes it too: iJWA is looked for at once.
 chrome.tabs.onUpdated.addListener((_id, change, tab) => { if ('audible' in change && siteOf(tab.url || '')) connect(); });
 connect();

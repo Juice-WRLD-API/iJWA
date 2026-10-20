@@ -5,7 +5,7 @@ const path = require('path');
 
 const DEFAULTS = {
   isEnabled: true, isOn: true, twoColors: true, motion: 'music',
-  onlyOnDesktop: false,  // the light shown only while the desktop (or iBaila) is in front
+  onlyOnDesktop: false,  // the light shown only while the desktop (or iJWA) is in front
   look: 'snake', place: 'all', // which light, and where round the screen (LightStyle.Look, LightStyle.Place)
   thickness: 0.1, glow: 0.7, particles: 0.4, tailLength: 1.0,
   primary: { hue: 0.74, saturation: 0.68, brightness: 1 },
@@ -51,7 +51,7 @@ const DEFAULTS = {
     isOn: true,            // songs' clips: the music video, the album's moving cover or the artist's video
     darkness: 0.5,         // 0...1: how much the picture is darkened, so the glass and icons over it read well
     videoIsOn: false,      // the user's own video on the desktop, beneath songs' clips
-    video: null,           // that video, as kept in iBaila's folder: "<id>/<file name>"
+    video: null,           // that video, as kept in iJWA's folder: "<id>/<file name>"
   },
   // The clock on the desktop (ClockStyle in LightSettings.swift).
   clock: {
@@ -72,7 +72,7 @@ const file = () => path.join(app.getPath('userData'), 'settings.json');
 let current = null;
 let pending = null;
 
-/** Whether there were no settings yet when iBaila started: a fresh install. */
+/** Whether there were no settings yet when iJWA started: a fresh install. */
 let fresh = false;
 
 function load() {

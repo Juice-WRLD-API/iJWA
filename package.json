@@ -1,8 +1,8 @@
 {
-  "name": "ibaila-windows",
-  "productName": "iBaila",
+  "name": "ijwa-windows",
+  "productName": "iJWA",
   "version": "1.9.1",
-  "description": "iBaila for Windows: light around your screen that moves with the music",
+  "description": "iJWA for Windows: light around your screen that moves with the music",
   "main": "src/main/main.js",
   "private": true,
   "author": "YoMilly",

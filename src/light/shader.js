@@ -1,4 +1,4 @@
-// iBaila's edge light, ported from EdgeLight.metal to WebGL2 (GLSL ES 3.00), field for field. The lights to choose
+// iJWA's edge light, ported from EdgeLight.metal to WebGL2 (GLSL ES 3.00), field for field. The lights to choose
 // from come word for word from the Mac's shader, through scripts/metal-to-glsl.py (looks-glsl.js); each gets its own
 // program, built the first time it's drawn.
 import { LOOKS_GLSL } from './looks-glsl.js';

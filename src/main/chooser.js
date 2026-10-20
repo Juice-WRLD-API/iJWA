@@ -38,10 +38,10 @@ class SourceChooser {
     if (!this.window || this.window.isDestroyed()) {
       // On its way already, it asks for the players when it's there.
       if (this.opening) return;
-      this.opening = openShared('ibaila://app/chooser/chooser.html', {
+      this.opening = openShared('ijwa://app/chooser/chooser.html', {
         width: 520, height: 300, frame: false, transparent: true, resizable: false, movable: false, minimizable: false, maximizable: false,
         fullscreenable: false, skipTaskbar: true, alwaysOnTop: true, hasShadow: false, show: false, focusable: true, backgroundColor: '#00000000',
-        title: 'iBaila', webPreferences: { preload: this.preload, contextIsolation: true },
+        title: 'iJWA', webPreferences: { preload: this.preload, contextIsolation: true },
       }, (win) => {
         this.opening = null;
         this.window = win;

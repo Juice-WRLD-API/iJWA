@@ -1,5 +1,5 @@
 // Song artwork kept on disk, so the cards and the list still have their pictures after a restart. One file per
-// album: songs of an album share it. Pages reach a file as ibaila://app/artwork/<name>: the pages' own origin, so
+// album: songs of an album share it. Pages reach a file as ijwa://app/artwork/<name>: the pages' own origin, so
 // they can read a picture's colors.
 const { app, nativeImage } = require('electron');
 const fs = require('fs');
@@ -38,7 +38,7 @@ function url(name) {
   if (!name) return null;
   let version = 0;
   try { version = Math.round(fs.statSync(file(name)).mtimeMs); } catch { /* not there */ }
-  return `ibaila://app/artwork/${name}?v=${version}`;
+  return `ijwa://app/artwork/${name}?v=${version}`;
 }
 
 function remove(name) { try { fs.unlinkSync(file(name)); } catch { /* gone already */ } }

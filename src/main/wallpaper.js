@@ -1,5 +1,5 @@
 // The desktop's wallpaper as frost for the glass (WallpaperFrost.swift): a 640-pixel copy laid out the way Windows
-// lays it on the primary display, served as ibaila://app/frost.jpg. Pages blur it and show the piece under their
+// lays it on the primary display, served as ijwa://app/frost.jpg. Pages blur it and show the piece under their
 // glass. A new wallpaper makes a new copy; with none to read, the glass is a darker one of its own.
 const { screen, nativeImage } = require('electron');
 const { execFile } = require('child_process');
@@ -41,7 +41,7 @@ function solid([r, g, b], width, height) {
 
 /** The wallpaper's file and how it is laid out: 'fill', 'stretch' or 'fit'. */
 async function source() {
-  if (process.env.IBAILA_WALLPAPER) return { file: process.env.IBAILA_WALLPAPER, layout: 'fill' };
+  if (process.env.IJWA_WALLPAPER) return { file: process.env.IJWA_WALLPAPER, layout: 'fill' };
   if (process.platform !== 'win32') return null;
   // A solid color (Personalize › Background): Windows keeps the last picture's copy, TranscodedWallpaper, all the same —
   // a picture the user no longer has, which showed beneath the live wallpaper at the wrong size and frosted the glass
@@ -117,7 +117,7 @@ function setLive(bytes) {
 }
 
 /** The frost's page address, or null with no wallpaper to frost. */
-function url() { const shown = live || made; return shown ? `ibaila://app/frost.jpg?v=${shown.version}` : null; }
+function url() { const shown = live || made; return shown ? `ijwa://app/frost.jpg?v=${shown.version}` : null; }
 
 function serve() {
   const shown = live || made;
@@ -125,7 +125,7 @@ function serve() {
 }
 
 /** The Windows wallpaper itself, full size, for the live wallpaper to show beneath its clips. */
-function fullURL() { return file ? `ibaila://app/wallpaper.jpg?v=${made?.version || 0}` : null; }
+function fullURL() { return file ? `ijwa://app/wallpaper.jpg?v=${made?.version || 0}` : null; }
 /** The Windows wallpaper's own file. */
 function fullFile() { return file; }
 function serveFull() {

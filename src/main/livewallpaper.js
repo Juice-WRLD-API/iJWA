@@ -117,7 +117,7 @@ class LiveWallpaper extends EventEmitter {
     if (!current()) return;
     if (!found) { console.log('[wallpaper] no clip for', track.title); this.setStatus('missing'); return; }
     console.log('[wallpaper]', found.clip.kind, 'for', track.title, ':', found.name);
-    this.playback = { id: found.name, name: found.name, url: `ibaila://app/clip/${found.name}`, kind: found.clip.kind, source: found.clip.source };
+    this.playback = { id: found.name, name: found.name, url: `ijwa://app/clip/${found.name}`, kind: found.clip.kind, source: found.clip.source };
     this.setStatus('ready');
     this.push();
   }
@@ -143,10 +143,10 @@ class LiveWallpaper extends EventEmitter {
   setBase(name) {
     if ((this.base?.name ?? null) === (name ?? null)) return;
     const file = name && path.join(videoFolder(), name);
-    this.base = file && fs.existsSync(file) ? { id: name, name, url: `ibaila://app/desktop-video/${name.split(/[\\/]/).map(encodeURIComponent).join('/')}`, kind: 'own' } : null;
+    this.base = file && fs.existsSync(file) ? { id: name, name, url: `ijwa://app/desktop-video/${name.split(/[\\/]/).map(encodeURIComponent).join('/')}`, kind: 'own' } : null;
   }
 
-  /** Asks for a video and puts it on the desktop: copied into iBaila's folder, so it plays on when the original is moved
+  /** Asks for a video and puts it on the desktop: copied into iJWA's folder, so it plays on when the original is moved
    *  or deleted. One at a time: choosing another replaces it. */
   async chooseVideo(parent) {
     const { canceled, filePaths } = await dialog.showOpenDialog(parent && !parent.isDestroyed() ? parent : undefined, {
@@ -192,13 +192,13 @@ class LiveWallpaper extends EventEmitter {
       this.closing = setTimeout(() => { this.stopHost(); wallpaper.setLive(null); }, 1400);
       return;
     }
-    if (process.env.IBAILA_SHOT && !process.env.IBAILA_SHOT_WALL) return;
+    if (process.env.IJWA_SHOT && !process.env.IJWA_SHOT_WALL) return;
     this.startHost();
     const displays = this.displays();
     this.tell({ type: 'show', displays, states: Object.fromEntries(displays.map((d) => [d.id, this.stateFor(d)])) });
   }
 
-  /** The displays iBaila lives on (the settings' Displays). */
+  /** The displays iJWA lives on (the settings' Displays). */
   displays() {
     const hidden = new Set(settings.get().hiddenDisplays || []);
     return screen.getAllDisplays().filter((d) => !hidden.has(d.label)).map((d) => ({ id: d.id, bounds: d.bounds,
@@ -208,7 +208,7 @@ class LiveWallpaper extends EventEmitter {
   /** The same app started again to hold only the wallpaper, told what to show over a named pipe. */
   startHost() {
     if (this.host) return;
-    const pipe = process.platform === 'win32' ? `\\\\.\\pipe\\ibaila-wallpaper-${process.pid}-${Date.now()}` : path.join(os.tmpdir(), `ibaila-wallpaper-${process.pid}-${Date.now()}.sock`);
+    const pipe = process.platform === 'win32' ? `\\\\.\\pipe\\ijwa-wallpaper-${process.pid}-${Date.now()}` : path.join(os.tmpdir(), `ijwa-wallpaper-${process.pid}-${Date.now()}.sock`);
     const host = { child: null, server: null, socket: null, queue: [] };
     this.host = host;
     host.server = net.createServer((socket) => {
@@ -226,7 +226,7 @@ class LiveWallpaper extends EventEmitter {
     host.server.on('error', (error) => console.log('[wallpaper] pipe:', error.message));
     host.server.listen(pipe, () => {
       if (this.host !== host) { host.server.close(); return; }
-      const args = [...(app.isPackaged ? [] : [app.getAppPath()]), '--ibaila-wallpaper', `--ibaila-pipe=${pipe}`];
+      const args = [...(app.isPackaged ? [] : [app.getAppPath()]), '--ijwa-wallpaper', `--ijwa-pipe=${pipe}`];
       const child = spawn(process.execPath, args, { stdio: 'ignore', windowsHide: true });
       host.child = child;
       child.on('exit', (code) => {

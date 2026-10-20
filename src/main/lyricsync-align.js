@@ -1,5 +1,5 @@
 'use strict';
-// Untimed words (Genius's) timed to the song itself, the matching half of iBaila's LyricsSync.swift, ported step by
+// Untimed words (Genius's) timed to the song itself, the matching half of iJWA's LyricsSync.swift, ported step by
 // step (2026-10-12): the same constants, the same order, the same ties, so a song's words land on the same times on
 // Mac and Windows. Whisper and the voice detector are run by the caller; what's here is pure: their output read, the
 // gaps chosen to be heard again, and the lyrics' words matched in order to the words heard.

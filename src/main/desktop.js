@@ -328,7 +328,7 @@ class DesktopPlayer {
   // ---- search ----
 
   /** The site listened on, searched itself (YouTube Music's catalog for YouTube too); anywhere else Apple's catalog,
-   *  searched as Apple Music's own page does: no key, no account. Its pictures come through iBaila's own folder
+   *  searched as Apple Music's own page does: no key, no account. Its pictures come through iJWA's own folder
    *  (covers.js), so a result shown again has its picture at once. */
   async search(term) {
     const site = this.nowPlaying.web.site;
@@ -472,7 +472,7 @@ class DesktopPlayer {
   async playSong(song) {
     if (!song) return false;
     const id = this.nowPlaying.ask({ title: song.title, artist: song.artist,
-      picture: song.artworkFile ? `ibaila://app/artwork/${song.artworkFile}` : null });
+      picture: song.artworkFile ? `ijwa://app/artwork/${song.artworkFile}` : null });
     const started = await this.startSong(song);
     if (!started) this.nowPlaying.askFailed(id);
     return started;
@@ -490,14 +490,14 @@ class DesktopPlayer {
       return web.play({ kind: 'song', title: song.title, artist: song.artist, link });
     }
     if (song?.playKey?.startsWith('spotify:track:')) return playSpotifyURI(song.playKey, song.title);
-    // One of the user's own songs: iBaila plays it again, in its folder's list if that is the one playing.
+    // One of the user's own songs: iJWA plays it again, in its folder's list if that is the one playing.
     if (song?.playKey?.startsWith('file:')) {
       return Boolean(require('./main-state').files?.playAgain({ id: song.playKey.slice(5), title: song.title, artist: song.artist,
         album: song.album, artworkFile: song.artworkFile || null }));
     }
     if (song?.source === 'spotify') return playInSpotify('track', song.title, song.artist);
     if (song?.source === 'music') return playInAppleMusic('track', song.title, require('./names').lead(song.artist));
-    // A song heard on the web plays there again, by its page when it was opened from iBaila.
+    // A song heard on the web plays there again, by its page when it was opened from iJWA.
     if (song?.source === 'web' || this.nowPlaying.web.site) return this.nowPlaying.web.play({ kind: 'song', title: song.title, artist: song.artist, link: song.link || null });
     return false;
   }
@@ -545,11 +545,11 @@ class DesktopPlayer {
 
   show(m) {
     const frame = this.frameFor(m);
-    this.opening = openShared('ibaila://app/desktop/desktop.html', {
+    this.opening = openShared('ijwa://app/desktop/desktop.html', {
       ...TOOL,
       ...frame, frame: false, transparent: true, resizable: false, movable: false, minimizable: false, maximizable: false,
       fullscreenable: false, skipTaskbar: true, hasShadow: false, show: false, focusable: false, alwaysOnTop: false,
-      backgroundColor: '#00000000', title: 'iBaila',
+      backgroundColor: '#00000000', title: 'iJWA',
       webPreferences: { preload: this.preload, backgroundThrottling: false, contextIsolation: true },
     }, (win) => {
       this.opening = null;
@@ -559,8 +559,8 @@ class DesktopPlayer {
       win.setIgnoreMouseEvents(true);
       this.seeThrough = true;
       this.feel();
-      // IBAILA_SHOT draws the player unseen, for a picture of it, and shows nothing on the screen.
-      if (!process.env.IBAILA_SHOT) win.once('ready-to-show', () => { win.showInactive(); });
+      // IJWA_SHOT draws the player unseen, for a picture of it, and shows nothing on the screen.
+      if (!process.env.IJWA_SHOT) win.once('ready-to-show', () => { win.showInactive(); });
       // The settings may have changed while it was on its way.
       this.apply();
     });

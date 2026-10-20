@@ -19,7 +19,7 @@ export async function pageQueue(site, ask) {
     // ---- Spotify's Web Player: its PlayerAPI, as its own queue page uses it (SpotifyInside.swift does the same in
     // Spotify's app) ----
     if (site === 'spotifyWeb') {
-      let platform = window.__ibailaPlatform;
+      let platform = window.__ijwaPlatform;
       if (!platform) {
         const root = [...document.querySelectorAll('body *')].find((e) => Object.keys(e).some((k) => k.startsWith('__reactContainer')));
         const stack = root ? [root[Object.keys(root).find((k) => k.startsWith('__reactContainer'))]] : [];
@@ -30,7 +30,7 @@ export async function pageQueue(site, ask) {
           if (f.child) stack.push(f.child);
           if (f.sibling) stack.push(f.sibling);
         }
-        if (platform) window.__ibailaPlatform = platform;
+        if (platform) window.__ijwaPlatform = platform;
       }
       if (!platform) return { error: 'no player' };
       let key = null;
@@ -41,7 +41,7 @@ export async function pageQueue(site, ask) {
         await player.skipTo({ uri, uid });
         return { played: true };
       }
-      // Changed and answered at once: Spotify shows a change in its queue a second or two later, and iBaila reads it
+      // Changed and answered at once: Spotify shows a change in its queue a second or two later, and iJWA reads it
       // again until it does (PlayQueue.swift) — waited for here, the page's timers in a tab behind are slowed to a
       // crawl.
       if (ask.what === 'remove') {

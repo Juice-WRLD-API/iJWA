@@ -87,7 +87,7 @@ function makeWords(text, height) {
 function followWords() {
   if (!lookOf(style.look).words) return;
   const height = tickerHeight(style.thickness);
-  const text = tickerLine || 'iBaila';
+  const text = tickerLine || 'iJWA';
   const key = `${text}|${height}`;
   if (key !== wordsFor) { wordsFor = key; makeWords(text, height); }
 }
@@ -172,15 +172,15 @@ function wake() {
 
 // ---- style and the song, from the app ------------------------------------------------------
 engine.fadeTo(style.isEnabled && style.isOn ? 1 : 0, 0);
-if (window.ibaila) {
-  window.ibaila.onStyle((next) => { style = { ...DEFAULT_STYLE, ...next }; engine.fadeTo(style.isEnabled && style.isOn ? 1 : 0, (performance.now() - t0) / 1000); wake(); });
-  window.ibaila.onPlaying((value) => { playing = value; wake(); });
-  window.ibaila.onAlbum((album) => { engine.setAlbum(album); wake(); });
-  window.ibaila.onMeter((value) => { meter = value; });
+if (window.ijwa) {
+  window.ijwa.onStyle((next) => { style = { ...DEFAULT_STYLE, ...next }; engine.fadeTo(style.isEnabled && style.isOn ? 1 : 0, (performance.now() - t0) / 1000); wake(); });
+  window.ijwa.onPlaying((value) => { playing = value; wake(); });
+  window.ijwa.onAlbum((album) => { engine.setAlbum(album); wake(); });
+  window.ijwa.onMeter((value) => { meter = value; });
   // The Lyrics Ticker's line, from the app: the line being sung, or the song's name and artist.
-  window.ibaila.onTicker?.((text) => { tickerLine = text || ''; wake(); });
+  window.ijwa.onTicker?.((text) => { tickerLine = text || ''; wake(); });
   // A song's artwork, as a picture: the light takes its two colors from it (grey artwork gives none).
-  window.ibaila.onArtwork((dataUrl) => {
+  window.ijwa.onArtwork((dataUrl) => {
     if (!dataUrl) { engine.setAlbum(null); wake(); return; }
     const image = new Image();
     image.onload = () => {

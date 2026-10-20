@@ -10,7 +10,7 @@ $ErrorActionPreference = 'Stop'
 Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
-public static class IBailaDesk {
+public static class IJWADesk {
   [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern IntPtr FindWindow(string cls, string name);
   [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern IntPtr FindWindowEx(IntPtr parent, IntPtr after, string cls, string name);
   [DllImport("user32.dll")] static extern IntPtr SendMessageTimeout(IntPtr h, uint msg, IntPtr w, IntPtr l, uint flags, uint timeout, out IntPtr result);
@@ -65,5 +65,5 @@ public static class IBailaDesk {
   }
 }
 '@
-try { [Console]::Out.WriteLine([IBailaDesk]::Place([IntPtr]$Handle, $Left, $Top, $Width, $Height)) }
+try { [Console]::Out.WriteLine([IJWADesk]::Place([IntPtr]$Handle, $Left, $Top, $Width, $Height)) }
 catch { [Console]::Out.WriteLine((@{ ok = $false; error = "$_" } | ConvertTo-Json -Compress)) }

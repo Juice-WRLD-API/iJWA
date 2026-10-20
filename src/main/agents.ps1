@@ -1,4 +1,4 @@
-# iBaila's helpers in one PowerShell: smtc.ps1 (what Windows says plays), spotify-agent.ps1 (Spotify, Apple Music) and
+# iJWA's helpers in one PowerShell: smtc.ps1 (what Windows says plays), spotify-agent.ps1 (Spotify, Apple Music) and
 # web-agent.ps1 (the browsers), each in a runspace of its own, side by side — a PowerShell apiece held 35–45 MB each
 # (measured 2026-10-09). Lines come in as "<helper>`t<line>" and are handed to that helper, started the first time;
 # what a helper says goes out the same way. "<helper>`tstart" only starts it, "<helper>`trestart" ends it (the next line
@@ -14,24 +14,24 @@ using System.Management.Automation.Runspaces;
 using System.Text;
 
 /** A helper's way out: each line it says, with its name in front. */
-public class IBailaTagged : TextWriter {
+public class IJWATagged : TextWriter {
     readonly string tag;
     readonly TextWriter to;
-    public IBailaTagged(string tag, TextWriter to) { this.tag = tag; this.to = to; }
+    public IJWATagged(string tag, TextWriter to) { this.tag = tag; this.to = to; }
     public override Encoding Encoding { get { return Encoding.UTF8; } }
     public override void WriteLine(string line) { lock (to) { to.Write(tag + "\t" + line + "\n"); to.Flush(); } }
     public override void Flush() { }
 }
 
-public class IBailaHelper {
+public class IJWAHelper {
     public PowerShell Shell;
     public Runspace Space;
     public StreamWriter Input;
     public volatile bool Ended;
 }
 
-public static class IBailaHelpers {
-    static readonly Dictionary<string, IBailaHelper> running = new Dictionary<string, IBailaHelper>();
+public static class IJWAHelpers {
+    static readonly Dictionary<string, IJWAHelper> running = new Dictionary<string, IJWAHelper>();
     static TextWriter output;
     static string folder;
     // The helpers asked of now and then — Spotify's, the browsers' — end after a while unused (started again on the
@@ -77,14 +77,14 @@ public static class IBailaHelpers {
         lastLine = DateTime.UtcNow;
         trimmed = false;
         if (line == "restart") { End(name); return; }
-        IBailaHelper helper;
+        IJWAHelper helper;
         lock (running) { running.TryGetValue(name, out helper); }
         if (helper == null || helper.Ended) { End(name); helper = Start(name); }
         if (line == "start") return;
         try { helper.Input.WriteLine(line); } catch (Exception) { End(name); }
     }
 
-    static IBailaHelper Start(string name) {
+    static IJWAHelper Start(string name) {
         var server = new AnonymousPipeServerStream(PipeDirection.Out);
         var client = new AnonymousPipeClientStream(PipeDirection.In, server.ClientSafePipeHandle);
         var input = new StreamWriter(server, new UTF8Encoding(false));
@@ -92,18 +92,18 @@ public static class IBailaHelpers {
         var space = RunspaceFactory.CreateRunspace();
         space.ApartmentState = System.Threading.ApartmentState.STA;
         space.Open();
-        space.SessionStateProxy.SetVariable("IBailaIn", new StreamReader(client, Encoding.UTF8));
-        space.SessionStateProxy.SetVariable("IBailaOut", new IBailaTagged(name, output));
+        space.SessionStateProxy.SetVariable("IJWAIn", new StreamReader(client, Encoding.UTF8));
+        space.SessionStateProxy.SetVariable("IJWAOut", new IJWATagged(name, output));
         var shell = PowerShell.Create();
         shell.Runspace = space;
         shell.AddScript(File.ReadAllText(Path.Combine(folder, name + ".ps1"))).AddCommand("Out-Null");
-        var helper = new IBailaHelper { Shell = shell, Space = space, Input = input };
+        var helper = new IJWAHelper { Shell = shell, Space = space, Input = input };
         shell.InvocationStateChanged += (sender, changed) => {
             var state = changed.InvocationStateInfo.State;
             if (state != PSInvocationState.Completed && state != PSInvocationState.Failed && state != PSInvocationState.Stopped) return;
             helper.Ended = true;
             // Only the one running says so: one ended to make room for a new one has nothing to say.
-            lock (running) { IBailaHelper now; if (!running.TryGetValue(name, out now) || now != helper) return; }
+            lock (running) { IJWAHelper now; if (!running.TryGetValue(name, out now) || now != helper) return; }
             lock (output) { output.Write(name + "\t{\"ended\":true}\n"); output.Flush(); }
         };
         lock (running) { running[name] = helper; }
@@ -112,7 +112,7 @@ public static class IBailaHelpers {
     }
 
     static void End(string name) {
-        IBailaHelper helper;
+        IJWAHelper helper;
         lock (running) {
             if (!running.TryGetValue(name, out helper)) return;
             running.Remove(name);
@@ -130,11 +130,11 @@ public static class IBailaHelpers {
 }
 '@ -ReferencedAssemblies System.Core, ([psobject].Assembly.Location)
 $out = New-Object System.IO.StreamWriter([Console]::OpenStandardOutput(), (New-Object System.Text.UTF8Encoding $false))
-[IBailaHelpers]::Begin($out, $PSScriptRoot)
+[IJWAHelpers]::Begin($out, $PSScriptRoot)
 $in = New-Object System.IO.StreamReader([Console]::OpenStandardInput(), [System.Text.Encoding]::UTF8)
 while ($null -ne ($line = $in.ReadLine())) {
     $tab = $line.IndexOf("`t")
-    if ($tab -gt 0) { [IBailaHelpers]::Hand($line.Substring(0, $tab), $line.Substring($tab + 1)) }
+    if ($tab -gt 0) { [IJWAHelpers]::Hand($line.Substring(0, $tab), $line.Substring($tab + 1)) }
 }
-# iBaila is gone.
-[IBailaHelpers]::EndAll()
+# iJWA is gone.
+[IJWAHelpers]::EndAll()

@@ -2,7 +2,7 @@
 // searched as it's typed (LyricsSearchMenu.swift; his ask, 2026-10-12: "yazdıkça arayamaz mı"): once the typing stops
 // for 0.4 s, so a word typed asks Genius once, not once a letter; a search overtaken by more typing is dropped, and one
 // made before is answered from memory. The songs found stay in sight while the next search runs.
-const api = window.ibaila;
+const api = window.ijwa;
 const $ = (s) => document.querySelector(s);
 const field = $('#asked'), list = $('#list'), busy = $('#busy');
 let first = '';

@@ -1,4 +1,4 @@
-// iBaila's helpers in one PowerShell (agents.ps1), each in a runspace of its own: what Windows says plays (smtc.ps1),
+// iJWA's helpers in one PowerShell (agents.ps1), each in a runspace of its own: what Windows says plays (smtc.ps1),
 // Spotify and Apple Music (spotify-agent.ps1), the browsers (web-agent.ps1). A PowerShell apiece held 35–45 MB each
 // (measured 2026-10-09). Lines go both ways as "<helper>\t<line>".
 const { spawn } = require('child_process');

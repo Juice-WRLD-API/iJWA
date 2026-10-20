@@ -419,7 +419,7 @@ body.waiting #stage, body.asking #stage { opacity: 0 !important; transform: scal
 body.waiting #empty, body.waiting #aura, body.waiting #refusal,
 body.asking #empty, body.asking #aura, body.asking #refusal { opacity: 0 !important; transition: opacity 0.3s; }
 
-/* ---- the extension asked for (ExtensionCard.swift): music in a browser, and iBaila not there yet ---- */
+/* ---- the extension asked for (ExtensionCard.swift): music in a browser, and iJWA not there yet ---- */
 #ext-card { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(1); width: calc(400px * var(--s)); box-sizing: border-box;
   display: flex; flex-direction: column; align-items: center; text-align: center; padding: calc(24px * var(--s)) calc(34px * var(--s)) calc(22px * var(--s));
   border-radius: calc(32px * var(--s)); transition: opacity 0.35s, transform 0.5s cubic-bezier(0.3, 1.25, 0.5, 1); z-index: 6; }

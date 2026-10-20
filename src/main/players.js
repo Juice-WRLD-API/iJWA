@@ -1,9 +1,9 @@
 // Starting a song or an album in the app the user listens in. Spotify takes no orders from other apps and shares no
-// song IDs, so spotify-agent.ps1 — a helper kept running beside iBaila — opens Spotify's own pages and presses
+// song IDs, so spotify-agent.ps1 — a helper kept running beside iJWA — opens Spotify's own pages and presses
 // the right Play button there, and reads the IDs of the song playing from Spotify's window.
 const helpers = require('./agents');
 
-/** A helper of iBaila's, asked one JSON line at a time (spotify-agent.ps1, web-agent.ps1), run in the helpers'
+/** A helper of iJWA's, asked one JSON line at a time (spotify-agent.ps1, web-agent.ps1), run in the helpers'
  *  PowerShell (agents.js). */
 class Agent {
   seq = 0;
@@ -47,7 +47,7 @@ class Agent {
 const agent = new Agent('spotify-agent.ps1');
 
 let helper = null;
-/** The now-playing helper, told which song iBaila is starting so it knows its ID when it plays. */
+/** The now-playing helper, told which song iJWA is starting so it knows its ID when it plays. */
 function useHelper(nowPlaying) {
   helper = nowPlaying;
   // Started only where Spotify or Apple Music is listened to — chosen, or playing — so the first click there finds it

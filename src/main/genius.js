@@ -1,5 +1,5 @@
 // Words from Genius for songs no other source has — unreleased songs above all, which its community writes down
-// (his ask, 2026-10-12: Juice WRLD's leaks, "paralı bir API olmamalı"). A port of GeniusLyrics in iBaila's
+// (his ask, 2026-10-12: Juice WRLD's leaks, "paralı bir API olmamalı"). A port of GeniusLyrics in iJWA's
 // GeniusLyrics.swift. Its search answers without a key, and the words are read from the song's own page. They come
 // untimed: the players pace them over the song.
 //

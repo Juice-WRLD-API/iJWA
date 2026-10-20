@@ -23,7 +23,7 @@ body.leaving #card { transition: opacity 0.22s, transform 0.22s; opacity: 0; tra
 .page.before { opacity: 0; transform: translateX(-40px); }
 .page.after { opacity: 0; transform: translateX(40px); }
 /* Only the page shown takes clicks: the ones waiting before and after it lie over it, unseen, and took them — "Get
-   iBaila" and the key's box did nothing (a friend's PC, 2026-10-09). */
+   iJWA" and the key's box did nothing (a friend's PC, 2026-10-09). */
 .page.before, .page.after { pointer-events: none; }
 .glow { position: relative; height: 110px; width: 160px; display: grid; place-items: center; }
 .glow::before { content: ''; position: absolute; width: 160px; height: 160px; left: 0; top: -25px; border-radius: 50%; filter: blur(14px);

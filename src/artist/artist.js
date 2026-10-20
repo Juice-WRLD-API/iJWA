@@ -6,7 +6,7 @@ import { paletteFromPixels, hsbToRgb } from '../light/engine.js';
 import { glide } from '../shared/glide.js';
 import { PlayingGlass } from '../shared/playing-glass.js';
 
-const api = window.ibaila;
+const api = window.ijwa;
 const $ = (selector) => document.querySelector(selector);
 const escape = (text) => String(text ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const svg = (body, fill = 'currentColor') => `<svg viewBox="0 0 24 24" fill="${fill}">${body}</svg>`;

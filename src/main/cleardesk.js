@@ -1,24 +1,24 @@
 // The desk cleared (ClearDesk.swift; his ask, 2026-10-10: a button beside the lyrics, like Focus on a Mac or an iPhone):
-// the other apps' windows, the desktop's icons and the taskbar go, and only iBaila — player, list, clock — the wallpaper
+// the other apps' windows, the desktop's icons and the taskbar go, and only iJWA — player, list, clock — the wallpaper
 // and the light stay. Pressed again, all comes back as it was; going to another app (Alt+Tab, the Start menu) brings it
 // all back too.
 //
 // No window is hidden, minimized or moved: the wallpaper is laid over all of them like a curtain, fading in — the live
-// wallpaper's clip over it, if one plays — with iBaila's windows lifted over it, and fades away again. Every window
+// wallpaper's clip over it, if one plays — with iJWA's windows lifted over it, and fades away again. Every window
 // waits under it exactly where it was, the taskbar too, so nothing of Windows itself is ever changed, and nothing is
-// left changed should iBaila stop.
+// left changed should iJWA stop.
 const { screen } = require('electron');
 const EventEmitter = require('events');
 const { TOOL, openShared } = require('./windows');
 
 class ClearDesk extends EventEmitter {
   isOn = false;
-  /** iBaila's windows held over the curtain: from the press until the curtain has opened again. */
+  /** iJWA's windows held over the curtain: from the press until the curtain has opened again. */
   holding = false;
   curtains = [];   // { win, ready: Promise }
   turn = 0;
 
-  /** windows: () => iBaila's own windows to keep in sight; live: the live wallpaper; preload: the pages' bridge. */
+  /** windows: () => iJWA's own windows to keep in sight; live: the live wallpaper; preload: the pages' bridge. */
   configure({ windows, live, preload, nowPlaying }) {
     Object.assign(this, { windows, live, preload, nowPlaying });
     const { ipcMain } = require('electron');
@@ -53,10 +53,10 @@ class ClearDesk extends EventEmitter {
     for (const display of screen.getAllDisplays()) {
       const one = { win: null };
       one.ready = new Promise((done) => {
-        openShared('ibaila://app/curtain/curtain.html', {
+        openShared('ijwa://app/curtain/curtain.html', {
           ...TOOL, ...display.bounds, frame: false, transparent: true, resizable: false, movable: false, minimizable: false,
           maximizable: false, fullscreenable: false, skipTaskbar: true, hasShadow: false, show: false, focusable: false,
-          alwaysOnTop: true, enableLargerThanScreen: true, backgroundColor: '#00000000', title: 'iBaila',
+          alwaysOnTop: true, enableLargerThanScreen: true, backgroundColor: '#00000000', title: 'iJWA',
           webPreferences: { preload: this.preload, backgroundThrottling: false, contextIsolation: true },
         }, (win) => {
           one.win = win;
@@ -65,7 +65,7 @@ class ClearDesk extends EventEmitter {
             if (turn !== this.turn || !this.isOn) { this.close(one); done(); return; }
             win.showInactive();
             win.setBounds(display.bounds);
-            // iBaila's own over it: the last brought to the top is the highest. Again a moment later, should the helper
+            // iJWA's own over it: the last brought to the top is the highest. Again a moment later, should the helper
             // keeping them by the desktop have looked once more meanwhile.
             this.lift();
             setTimeout(() => { if (this.isOn) this.lift(); }, 600);
@@ -78,7 +78,7 @@ class ClearDesk extends EventEmitter {
     }
   }
 
-  /** Everything back: the curtain opens, then iBaila's windows go back down among the others. */
+  /** Everything back: the curtain opens, then iJWA's windows go back down among the others. */
   end() {
     this.isOn = false;
     ++this.turn;
@@ -116,7 +116,7 @@ class ClearDesk extends EventEmitter {
     this.emit('lowered');
   }
 
-  /** A window of iBaila's made while the desk is clear: over the curtain too. */
+  /** A window of iJWA's made while the desk is clear: over the curtain too. */
   adopt(win) {
     if (!this.holding || !win || win.isDestroyed()) return;
     win.setAlwaysOnTop(true, 'screen-saver');

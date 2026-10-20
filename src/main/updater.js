@@ -1,6 +1,6 @@
-// Updates (Updater.swift's Sparkle, on Windows): iBaila's releases on GitHub (rapperasistan/ibaila-windows, nothing
+// Updates (Updater.swift's Sparkle, on Windows): iJWA's releases on GitHub (rapperasistan/ibaila-windows, nothing
 // but installers) are asked at start and once a day. A new version downloads quietly — only the parts that changed —
-// and then asks to restart; left for later, it is installed the next time iBaila quits.
+// and then asks to restart; left for later, it is installed the next time iJWA quits.
 const { app, dialog } = require('electron');
 
 /** Only an installed copy updates itself: the test machine's loose files and `electron .` don't. */
@@ -19,8 +19,8 @@ async function offer(info) {
   if (offered === info.version) return;
   offered = info.version;
   const notes = strip(info.releaseNotes);
-  const { response } = await dialog.showMessageBox({ type: 'info', title: 'iBaila', noLink: true, buttons: ['Restart Now', 'Later'], defaultId: 0, cancelId: 1,
-    message: `iBaila ${info.version} is ready`, detail: `${notes ? `${notes}\n\n` : ''}Restart iBaila to use it.` });
+  const { response } = await dialog.showMessageBox({ type: 'info', title: 'iJWA', noLink: true, buttons: ['Restart Now', 'Later'], defaultId: 0, cancelId: 1,
+    message: `iJWA ${info.version} is ready`, detail: `${notes ? `${notes}\n\n` : ''}Restart iJWA to use it.` });
   if (response === 0) setImmediate(() => updater.quitAndInstall(true, true));
 }
 
@@ -34,12 +34,12 @@ function start() {
   updater.on('update-not-available', () => {
     if (!asked) return;
     asked = false;
-    dialog.showMessageBox({ type: 'info', title: 'iBaila', noLink: true, buttons: ['OK'], message: 'You’re up to date', detail: `iBaila ${app.getVersion()} is the newest version.` });
+    dialog.showMessageBox({ type: 'info', title: 'iJWA', noLink: true, buttons: ['OK'], message: 'You’re up to date', detail: `iJWA ${app.getVersion()} is the newest version.` });
   });
   updater.on('error', (error) => {
     if (!asked) return;
     asked = false;
-    dialog.showMessageBox({ type: 'warning', title: 'iBaila', noLink: true, buttons: ['OK'], message: 'iBaila couldn’t check for updates',
+    dialog.showMessageBox({ type: 'warning', title: 'iJWA', noLink: true, buttons: ['OK'], message: 'iJWA couldn’t check for updates',
       detail: 'Check your connection and try again in a moment.' });
     console.error('[update]', error?.message);
   });
@@ -51,7 +51,7 @@ function start() {
 /** Check for Updates…: asked now, and answered either way. A version downloaded already is offered again. */
 function checkNow() {
   if (!updater) {
-    dialog.showMessageBox({ type: 'info', title: 'iBaila', noLink: true, buttons: ['OK'], message: 'You’re up to date', detail: `iBaila ${app.getVersion()} is the newest version.` });
+    dialog.showMessageBox({ type: 'info', title: 'iJWA', noLink: true, buttons: ['OK'], message: 'You’re up to date', detail: `iJWA ${app.getVersion()} is the newest version.` });
     return;
   }
   asked = true;

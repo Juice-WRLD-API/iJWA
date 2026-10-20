@@ -1,4 +1,4 @@
-// Presses Windows eats. iBaila's desktop windows never take the keys, and Chromium answers Windows' "activate on
+// Presses Windows eats. iJWA's desktop windows never take the keys, and Chromium answers Windows' "activate on
 // this click?" for such a window with "no, and eat the click" — at times, the press goes and only the release and
 // the moves after it arrive (seen in the test machine, 2026-10-09). Each window is watched: a release, or a pointer
 // held down and moving, with no press heard before it, gets its press handed to the page again where it was — a click

@@ -1,6 +1,6 @@
 // The glass bar under the cards (PlayerBar.swift): back, play, forward and repeat on the left; the song in the
 // middle, a title too long to fit running along on its own, its progress a fine line beneath; lyrics and volume on the
-// right, and beside the lyrics the desk cleared of all but iBaila (ClearDesk.swift). No shuffle and no list of songs:
+// right, and beside the lyrics the desk cleared of all but iJWA (ClearDesk.swift). No shuffle and no list of songs:
 // they took room for little (his call, 2026-10-10).
 import { icons } from './icons.js';
 import { logos, CHOICES } from './logos.js';

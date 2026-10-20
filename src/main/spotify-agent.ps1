@@ -1,4 +1,4 @@
-# Plays albums and songs in the Spotify app, and reads the IDs of the song playing there, for as long as iBaila
+# Plays albums and songs in the Spotify app, and reads the IDs of the song playing there, for as long as iJWA
 # runs: one process, started once, so a click costs no PowerShell start. Spotify takes no orders from other apps, so
 # its own window is read and its Play buttons pressed the way a screen reader does it (UI Automation). Each look
 # into Spotify's window fetches everything it needs in one go (a cache request), not one question per element.
@@ -16,11 +16,11 @@ $A = [System.Windows.Automation.AutomationElement]
 $Scope = [System.Windows.Automation.TreeScope]
 $Types = [System.Windows.Automation.ControlType]
 $ValueProperty = [System.Windows.Automation.ValuePattern]::ValueProperty
-# Run by agents.ps1, lines go to and come from iBaila through it; run on its own, through the console.
-if (-not $IBailaOut) { $IBailaOut = [Console]::Out }
-function Say($object) { $IBailaOut.WriteLine(($object | ConvertTo-Json -Compress -Depth 4)); $IBailaOut.Flush() }
+# Run by agents.ps1, lines go to and come from iJWA through it; run on its own, through the console.
+if (-not $IJWAOut) { $IJWAOut = [Console]::Out }
+function Say($object) { $IJWAOut.WriteLine(($object | ConvertTo-Json -Compress -Depth 4)); $IJWAOut.Flush() }
 
-Add-Type -Namespace IBaila -Name Win -MemberDefinition @'
+Add-Type -Namespace IJWA -Name Win -MemberDefinition @'
 [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
 [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
 [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
@@ -31,7 +31,7 @@ Add-Type -Namespace IBaila -Name Win -MemberDefinition @'
 [DllImport("dwmapi.dll")] public static extern int DwmSetWindowAttribute(IntPtr h, int attribute, ref int value, int size);
 [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
 /// `h` put back under `above`, the window it was under, giving no keys. A window put under one in the topmost band is
-/// made topmost itself: a browser put back under iBaila's light (topmost, over the whole screen) stayed over every
+/// made topmost itself: a browser put back under iJWA's light (topmost, over the whole screen) stayed over every
 /// window after (the test PC, 2026-10-12). Under a topmost window an ordinary one was the top of the ordinary ones,
 /// so it goes back there instead.
 public static void PutUnder(IntPtr h, IntPtr above) {
@@ -65,40 +65,40 @@ public static uint LastInput() { LASTINPUT i = new LASTINPUT(); i.cbSize = (uint
 # The keys back to the window the user was in: a key press first (F24, which nothing uses), as Windows lets an app hand
 # the foreground on only right after input; with no window in front, the desktop — never Spotify keeping them.
 function GiveBack($front) {
-  if (-not $front -or $front -eq [IntPtr]::Zero) { $front = [IBaila.Win]::GetShellWindow() }
+  if (-not $front -or $front -eq [IntPtr]::Zero) { $front = [IJWA.Win]::GetShellWindow() }
   if ($front -eq [IntPtr]::Zero) { return }
-  [IBaila.Win]::keybd_event(0x87, 0, 0, [IntPtr]::Zero); [IBaila.Win]::keybd_event(0x87, 0, 2, [IntPtr]::Zero)
-  $null = [IBaila.Win]::SetForegroundWindow($front)
+  [IJWA.Win]::keybd_event(0x87, 0, 0, [IntPtr]::Zero); [IJWA.Win]::keybd_event(0x87, 0, 2, [IntPtr]::Zero)
+  $null = [IJWA.Win]::SetForegroundWindow($front)
   # That press is Windows' latest input too: never taken for the user's own (it left Spotify shown as if they had
   # opened it, the test machine, 2026-10-10).
-  $script:inputBefore = [IBaila.Win]::LastInput()
+  $script:inputBefore = [IJWA.Win]::LastInput()
 }
 
 # A press of the user's own that brings a window forward: a mouse button (its taskbar button), Alt (Alt-Tab), the Windows
 # key — never the pointer only moving, which Windows' last-input time counts too: a friend moving his mouse while a song
 # started had Spotify taken for his and left in front (2026-10-10). Looked at every turn of the waits below.
-# A click on iBaila itself — the player, its cards, its search — is no one opening Spotify: its windows are iBaila's
+# A click on iJWA itself — the player, its cards, its search — is no one opening Spotify: its windows are iJWA's
 # own process's, the one this helper was started from.
 $script:pressedAt = 0
-$script:iBailaPid = try { [uint32](Get-CimInstance Win32_Process -Filter "ProcessId=$PID").ParentProcessId } catch { [uint32]0 }
+$script:iJWAPid = try { [uint32](Get-CimInstance Win32_Process -Filter "ProcessId=$PID").ParentProcessId } catch { [uint32]0 }
 function Watch {
   foreach ($key in 0x12, 0x5B, 0x5C) {
-    if ([IBaila.Win]::GetAsyncKeyState($key) -band 0x8000) { $script:pressedAt = [IBaila.Win]::GetTickCount(); return }
+    if ([IJWA.Win]::GetAsyncKeyState($key) -band 0x8000) { $script:pressedAt = [IJWA.Win]::GetTickCount(); return }
   }
   foreach ($key in 0x01, 0x02, 0x04) {
-    if (-not ([IBaila.Win]::GetAsyncKeyState($key) -band 0x8000)) { continue }
-    if ([IBaila.Win]::UnderPointer() -ne $script:iBailaPid) { $script:pressedAt = [IBaila.Win]::GetTickCount() }
+    if (-not ([IJWA.Win]::GetAsyncKeyState($key) -band 0x8000)) { continue }
+    if ([IJWA.Win]::UnderPointer() -ne $script:iJWAPid) { $script:pressedAt = [IJWA.Win]::GetTickCount() }
     return
   }
 }
 
-# Spotify brought to the front by the user themselves — its taskbar button clicked, Alt-Tab — while iBaila had it play:
+# Spotify brought to the front by the user themselves — its taskbar button clicked, Alt-Tab — while iJWA had it play:
 # theirs from then on, shown and left open (Mac, 2026-10-10: Spotify clicked open went straight back out of sight). The
 # user pressed within a moment of it coming forward, after the play began.
 function UserOpened($handle) {
   Watch
-  if (-not $handle -or [IBaila.Win]::GetForegroundWindow() -ne $handle) { return $false }
-  return ($script:pressedAt -ne 0) -and (([IBaila.Win]::GetTickCount() - $script:pressedAt) -lt 1500)
+  if (-not $handle -or [IJWA.Win]::GetForegroundWindow() -ne $handle) { return $false }
+  return ($script:pressedAt -ne 0) -and (([IJWA.Win]::GetTickCount() - $script:pressedAt) -lt 1500)
 }
 
 # "i am > i was (Deluxe)" and "i am > i was" are one album; "ISSA" and "Issa Album" are not.
@@ -115,12 +115,12 @@ function SpotifyWindow {
 # opening and minimizing animations, so nothing seems to happen but the music starting.
 function SeeThrough($handle, $on, [byte]$alpha = 0) {
   if (-not $handle -or $handle -eq [IntPtr]::Zero) { return }
-  $style = [IBaila.Win]::GetWindowLong($handle, -20)
+  $style = [IJWA.Win]::GetWindowLong($handle, -20)
   $off = [int]$on
-  $null = [IBaila.Win]::DwmSetWindowAttribute($handle, 3, [ref]$off, 4)
+  $null = [IJWA.Win]::DwmSetWindowAttribute($handle, 3, [ref]$off, 4)
   # Layered at no opacity and passing clicks through (WS_EX_TRANSPARENT): there for the app, neither seen nor in the way.
-  if ($on) { $null = [IBaila.Win]::SetWindowLong($handle, -20, $style -bor 0x80020); $null = [IBaila.Win]::SetLayeredWindowAttributes($handle, 0, $alpha, 2) }
-  else { $null = [IBaila.Win]::SetLayeredWindowAttributes($handle, 0, 255, 2); $null = [IBaila.Win]::SetWindowLong($handle, -20, $style -band (-bnot 0x80020)) }
+  if ($on) { $null = [IJWA.Win]::SetWindowLong($handle, -20, $style -bor 0x80020); $null = [IJWA.Win]::SetLayeredWindowAttributes($handle, 0, $alpha, 2) }
+  else { $null = [IJWA.Win]::SetLayeredWindowAttributes($handle, 0, 255, 2); $null = [IJWA.Win]::SetWindowLong($handle, -20, $style -band (-bnot 0x80020)) }
 }
 
 # What each look into the window brings back with the elements: their name, kind, whether they can be pressed, and
@@ -144,13 +144,13 @@ $buttonCondition = New-Object System.Windows.Automation.PropertyCondition($A::Co
 $comboCondition = New-Object System.Windows.Automation.PropertyCondition($A::ControlTypeProperty, $Types::ComboBox)
 
 # ---- the input: read without blocking, so a play still looking can see a newer one come in ----
-$stdin = if ($IBailaIn) { $IBailaIn } else { New-Object System.IO.StreamReader([Console]::OpenStandardInput()) }
+$stdin = if ($IJWAIn) { $IJWAIn } else { New-Object System.IO.StreamReader([Console]::OpenStandardInput()) }
 $script:pending = $stdin.ReadLineAsync()
 $script:waiting = New-Object System.Collections.Queue
 function Arrived {
   if ($script:pending.IsCompleted) {
     $text = $script:pending.Result
-    if ($null -eq $text) { exit }   # iBaila is gone
+    if ($null -eq $text) { exit }   # iJWA is gone
     $script:pending = $stdin.ReadLineAsync()
     if ($text.Trim()) { $script:waiting.Enqueue($text) }
   }
@@ -172,18 +172,18 @@ function Play($c) {
   $want = Plain $Title
   if ($script:carry) { $foreground = $script:carry.foreground; $state = $script:carry.state; $above = $script:carry.above; $script:carry = $null }
   else {
-    $foreground = [IBaila.Win]::GetForegroundWindow()
+    $foreground = [IJWA.Win]::GetForegroundWindow()
     $before = SpotifyWindow
-    $above = if ($before) { [IBaila.Win]::GetWindow($before.MainWindowHandle, 3) } else { [IntPtr]::Zero }
-    $state = if (-not $before) { 'hidden' } elseif ([IBaila.Win]::IsIconic($before.MainWindowHandle)) { 'minimized' } elseif ($foreground -eq $before.MainWindowHandle) { 'front' } else { 'behind' }
+    $above = if ($before) { [IJWA.Win]::GetWindow($before.MainWindowHandle, 3) } else { [IntPtr]::Zero }
+    $state = if (-not $before) { 'hidden' } elseif ([IJWA.Win]::IsIconic($before.MainWindowHandle)) { 'minimized' } elseif ($foreground -eq $before.MainWindowHandle) { 'front' } else { 'behind' }
     # A minimized Spotify can still be Windows' foreground (nothing else took it): the keys then go to the desktop.
-    if ($state -eq 'minimized' -and $foreground -eq $before.MainWindowHandle) { $foreground = [IBaila.Win]::GetShellWindow() }
+    if ($state -eq 'minimized' -and $foreground -eq $before.MainWindowHandle) { $foreground = [IJWA.Win]::GetShellWindow() }
     if ($state -ne 'front' -and $before) { SeeThrough $before.MainWindowHandle $true }
   }
 
   $lead = Plain (($Artist -split ',| & | feat\. | ft\. | x | with | ve ')[0])
   $query = if ($Artist) { "$Artist $Title" } else { $Title }
-  $script:inputBefore = [IBaila.Win]::LastInput()
+  $script:inputBefore = [IJWA.Win]::LastInput()
   # The click that picked the song is over by now: only presses from here on are taken for the user opening Spotify.
   $script:pressedAt = 0
   $theirs = $false
@@ -216,7 +216,7 @@ function Play($c) {
       Watch
       $w = SpotifyWindow
       if ($w -and $state -eq 'hidden') { SeeThrough $w.MainWindowHandle $true }
-      if ($w -and [IBaila.Win]::GetForegroundWindow() -eq $w.MainWindowHandle) { break }
+      if ($w -and [IJWA.Win]::GetForegroundWindow() -eq $w.MainWindowHandle) { break }
     }
     if ($w -and (UserOpened $w.MainWindowHandle)) { $theirs = $true; SeeThrough $w.MainWindowHandle $false }
     else { GiveBack $foreground }
@@ -235,7 +235,7 @@ function Play($c) {
     # A window that came up late stays out of sight too — unless the user opened it themselves.
     if ($state -ne 'front' -and -not $theirs) {
       if (UserOpened $window.MainWindowHandle) { $theirs = $true; SeeThrough $window.MainWindowHandle $false }
-      else { SeeThrough $window.MainWindowHandle $true; if ([IBaila.Win]::GetForegroundWindow() -eq $window.MainWindowHandle) { GiveBack $foreground } }
+      else { SeeThrough $window.MainWindowHandle $true; if ([IJWA.Win]::GetForegroundWindow() -eq $window.MainWindowHandle) { GiveBack $foreground } }
     }
     $root = $A::FromHandle($window.MainWindowHandle)
 
@@ -324,7 +324,7 @@ function Play($c) {
   }
 
   # Handed an address, Spotify brings its window up by itself a moment later: after a song it played at once, once
-  # iBaila had put it back (1.5 s, the test machine, 2026-10-10). Kept out of sight till then, the keys given back.
+  # iJWA had put it back (1.5 s, the test machine, 2026-10-10). Kept out of sight till then, the keys given back.
   if ($state -ne 'front' -and -not $theirs) {
     while (((Get-Date) - $handedAt).TotalMilliseconds -lt 3500) {
       Start-Sleep -Milliseconds 100
@@ -332,7 +332,7 @@ function Play($c) {
       if (-not $w) { continue }
       if (UserOpened $w.MainWindowHandle) { $theirs = $true; break }
       SeeThrough $w.MainWindowHandle $true
-      if ([IBaila.Win]::GetForegroundWindow() -eq $w.MainWindowHandle) { GiveBack $foreground }
+      if ([IJWA.Win]::GetForegroundWindow() -eq $w.MainWindowHandle) { GiveBack $foreground }
     }
   }
 
@@ -345,16 +345,16 @@ function Play($c) {
   elseif ($after -and $state -ne 'front') {
     $h = $after.MainWindowHandle
     switch ($state) {
-      'minimized' { $null = [IBaila.Win]::ShowWindow($h, 7) }   # SW_SHOWMINNOACTIVE
-      'hidden'    { $null = [IBaila.Win]::ShowWindow($h, 0) }   # SW_HIDE
+      'minimized' { $null = [IJWA.Win]::ShowWindow($h, 7) }   # SW_SHOWMINNOACTIVE
+      'hidden'    { $null = [IJWA.Win]::ShowWindow($h, 0) }   # SW_HIDE
       'behind'    {
         # Under the window it was under again, without taking the keys (never at the very bottom: that is under the
         # desktop, where it would be lost).
-        if ($above -and $above -ne [IntPtr]::Zero) { [IBaila.Win]::PutUnder($h, $above) }
+        if ($above -and $above -ne [IntPtr]::Zero) { [IJWA.Win]::PutUnder($h, $above) }
       }
     }
     # The keyboard never stays with a Spotify out of sight: the next key (Space, say) would go to it.
-    if ([IBaila.Win]::GetForegroundWindow() -eq $h) { GiveBack $foreground }
+    if ([IJWA.Win]::GetForegroundWindow() -eq $h) { GiveBack $foreground }
     Start-Sleep -Milliseconds 150
     SeeThrough $h $false
   }
@@ -369,37 +369,37 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-[ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")] class IBailaDeviceEnumerator {}
+[ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")] class IJWADeviceEnumerator {}
 [Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-interface IIBailaDeviceEnumerator { int NotImpl1(); [PreserveSig] int GetDefaultAudioEndpoint(int flow, int role, out IIBailaDevice device); }
+interface IIJWADeviceEnumerator { int NotImpl1(); [PreserveSig] int GetDefaultAudioEndpoint(int flow, int role, out IIJWADevice device); }
 [Guid("D666063F-1587-4E43-81F1-B948E807363F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-interface IIBailaDevice { [PreserveSig] int Activate(ref Guid iid, int context, IntPtr parameters, [MarshalAs(UnmanagedType.IUnknown)] out object result); }
+interface IIJWADevice { [PreserveSig] int Activate(ref Guid iid, int context, IntPtr parameters, [MarshalAs(UnmanagedType.IUnknown)] out object result); }
 [Guid("77AA99A0-1BD6-484F-8BC7-2C654C9A9B6F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-interface IIBailaSessionManager { int NotImpl1(); int NotImpl2(); [PreserveSig] int GetSessionEnumerator(out IIBailaSessions sessions); }
+interface IIJWASessionManager { int NotImpl1(); int NotImpl2(); [PreserveSig] int GetSessionEnumerator(out IIJWASessions sessions); }
 [Guid("E2F5BB11-0570-40CA-ACDD-3AA01277DEE8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-interface IIBailaSessions { [PreserveSig] int GetCount(out int count); [PreserveSig] int GetSession(int index, out IIBailaSession session); }
+interface IIJWASessions { [PreserveSig] int GetCount(out int count); [PreserveSig] int GetSession(int index, out IIJWASession session); }
 [Guid("bfb7ff88-7239-4fc9-8fa2-07c950be9c6d"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-interface IIBailaSession { int N0(); int N1(); int N2(); int N3(); int N4(); int N5(); int N6(); int N7(); int N8(); int N9(); int N10(); [PreserveSig] int GetProcessId(out int pid); }
+interface IIJWASession { int N0(); int N1(); int N2(); int N3(); int N4(); int N5(); int N6(); int N7(); int N8(); int N9(); int N10(); [PreserveSig] int GetProcessId(out int pid); }
 [Guid("87CE5498-68D6-44E5-9215-6DA47EF883D8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-interface IIBailaSimpleVolume { [PreserveSig] int SetMasterVolume(float level, ref Guid context); [PreserveSig] int GetMasterVolume(out float level); }
-public static class IBailaVolume {
-    static List<IIBailaSimpleVolume> Of(string name) {
-        var found = new List<IIBailaSimpleVolume>();
-        var enumerator = (IIBailaDeviceEnumerator)new IBailaDeviceEnumerator();
-        IIBailaDevice device;
+interface IIJWASimpleVolume { [PreserveSig] int SetMasterVolume(float level, ref Guid context); [PreserveSig] int GetMasterVolume(out float level); }
+public static class IJWAVolume {
+    static List<IIJWASimpleVolume> Of(string name) {
+        var found = new List<IIJWASimpleVolume>();
+        var enumerator = (IIJWADeviceEnumerator)new IJWADeviceEnumerator();
+        IIJWADevice device;
         if (enumerator.GetDefaultAudioEndpoint(0, 1, out device) != 0) return found;
-        var iid = typeof(IIBailaSessionManager).GUID;
+        var iid = typeof(IIJWASessionManager).GUID;
         object manager;
         if (device.Activate(ref iid, 23, IntPtr.Zero, out manager) != 0) return found;
-        IIBailaSessions sessions;
-        ((IIBailaSessionManager)manager).GetSessionEnumerator(out sessions);
+        IIJWASessions sessions;
+        ((IIJWASessionManager)manager).GetSessionEnumerator(out sessions);
         int count; sessions.GetCount(out count);
         for (int i = 0; i < count; i++) {
-            IIBailaSession session; sessions.GetSession(i, out session);
+            IIJWASession session; sessions.GetSession(i, out session);
             int pid; session.GetProcessId(out pid);
             string process = "";
             try { process = Process.GetProcessById(pid).ProcessName; } catch { continue; }
-            if (string.Equals(process, name, StringComparison.OrdinalIgnoreCase)) found.Add((IIBailaSimpleVolume)session);
+            if (string.Equals(process, name, StringComparison.OrdinalIgnoreCase)) found.Add((IIJWASimpleVolume)session);
         }
         return found;
     }
@@ -421,8 +421,8 @@ function Volume($c) {
   if ($name -match '^(chrome|msedge|firefox|brave|opera|vivaldi|spotify)$' -eq $false) {
     foreach ($known in @('Spotify', 'chrome', 'msedge', 'firefox', 'brave', 'opera', 'vivaldi')) { if ($name -like "*$known*") { $name = $known } }
   }
-  if ($null -ne $c.value) { return @{ ok = [IBailaVolume]::Set($name, [float]$c.value) } }
-  $level = [IBailaVolume]::Get($name)
+  if ($null -ne $c.value) { return @{ ok = [IJWAVolume]::Set($name, [float]$c.value) } }
+  $level = [IJWAVolume]::Get($name)
   return @{ volume = $(if ($level -ge 0) { [math]::Round($level, 3) } else { $null }) }
 }
 
@@ -442,7 +442,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
-public static class IBailaUnseen {
+public static class IJWAUnseen {
     delegate void WinEventProc(IntPtr hook, uint ev, IntPtr hwnd, int idObject, int idChild, uint thread, uint time);
     [DllImport("user32.dll")] static extern IntPtr SetWinEventHook(uint min, uint max, IntPtr module, WinEventProc proc, uint pid, uint tid, uint flags);
     [DllImport("user32.dll")] static extern bool UnhookWinEvent(IntPtr hook);
@@ -542,7 +542,7 @@ function RowsOf($list) {
 function Apple($c) {
   $Title = [string]$c.title; $Artist = [string]$c.artist; $Kind = if ($c.kind) { [string]$c.kind } else { 'track' }
   $want = Plain $Title; $lead = Plain (($Artist -split ',| & | feat\. | ft\. | x | with ')[0])
-  $foreground = [IBaila.Win]::GetForegroundWindow()
+  $foreground = [IJWA.Win]::GetForegroundWindow()
   $win = AppleWindow
   $state = 'behind'
   if (-not $win) {
@@ -552,7 +552,7 @@ function Apple($c) {
     $until = (Get-Date).AddSeconds(10)
     while ((Get-Date) -lt $until) {
       $process = Get-Process AppleMusic -ErrorAction SilentlyContinue | Select-Object -First 1
-      if ($process) { [IBailaUnseen]::Start([uint32]$process.Id); break }
+      if ($process) { [IJWAUnseen]::Start([uint32]$process.Id); break }
       Start-Sleep -Milliseconds 30
     }
     $win = Until 20 { AppleWindow }
@@ -561,16 +561,16 @@ function Apple($c) {
     Start-Sleep -Seconds 2
   }
   $h = [IntPtr]$win.Current.NativeWindowHandle
-  if ($state -ne 'opened') { $state = if ([IBaila.Win]::IsIconic($h)) { 'minimized' } elseif ($foreground -eq $h) { 'front' } else { 'behind' } }
+  if ($state -ne 'opened') { $state = if ([IJWA.Win]::IsIconic($h)) { 'minimized' } elseif ($foreground -eq $h) { 'front' } else { 'behind' } }
   # Unseen while it is worked: in its place, but see-through and letting clicks pass, its animations off; a minimized
   # window is shown first (WinUI lays nothing out in a minimized one). Put back as it was after: minimized again, or
   # under the window it was under.
-  $above = [IBaila.Win]::GetWindow($h, 3)
+  $above = [IJWA.Win]::GetWindow($h, 3)
   if ($state -ne 'front') {
     # (Started afresh, the hook would first show again what it hid.)
-    if ($state -ne 'opened') { [IBailaUnseen]::Start([uint32]$win.Current.ProcessId) }
+    if ($state -ne 'opened') { [IJWAUnseen]::Start([uint32]$win.Current.ProcessId) }
     SeeThrough $h $true
-    if ($state -eq 'minimized' -or $state -eq 'opened') { $null = [IBaila.Win]::ShowWindow($h, 4) }   # SW_SHOWNOACTIVATE
+    if ($state -eq 'minimized' -or $state -eq 'opened') { $null = [IJWA.Win]::ShowWindow($h, 4) }   # SW_SHOWNOACTIVATE
     Start-Sleep -Milliseconds 350
   }
   $answer = $null
@@ -578,9 +578,9 @@ function Apple($c) {
     # The keys its, for the search's Enter: a background process may hand them over just after a key was pressed — F24,
     # which no app answers (Alt would show the app's key tips); failing that, woken by its own address it takes them.
     if ($state -ne 'front') {
-      [IBaila.Win]::keybd_event(0x87, 0, 0, [IntPtr]::Zero); [IBaila.Win]::keybd_event(0x87, 0, 2, [IntPtr]::Zero)
-      $null = [IBaila.Win]::SetForegroundWindow($h)
-      if (-not (Until 0.6 { [IBaila.Win]::GetForegroundWindow() -eq $h })) { Start-Process 'music:'; $null = Until 3 { [IBaila.Win]::GetForegroundWindow() -eq $h } }
+      [IJWA.Win]::keybd_event(0x87, 0, 0, [IntPtr]::Zero); [IJWA.Win]::keybd_event(0x87, 0, 2, [IntPtr]::Zero)
+      $null = [IJWA.Win]::SetForegroundWindow($h)
+      if (-not (Until 0.6 { [IJWA.Win]::GetForegroundWindow() -eq $h })) { Start-Process 'music:'; $null = Until 3 { [IJWA.Win]::GetForegroundWindow() -eq $h } }
     }
     $transport = ById $win 'TransportControl_PlayPauseStop'
     $before = if ($transport) { [string]$transport.Current.Name } else { '' }
@@ -604,7 +604,7 @@ function Apple($c) {
     # Enter only while the search box has the keyboard: pressed elsewhere — Search, the desktop — it opens what is
     # chosen there (web-agent.ps1's FocusIn, 2026-10-09).
     if (-not (KeysAt $box)) { return @{ ok = $false; error = 'search box not in front' } }
-    [IBaila.Win]::keybd_event(0x0D, 0, 0, [IntPtr]::Zero); [IBaila.Win]::keybd_event(0x0D, 0, 2, [IntPtr]::Zero)
+    [IJWA.Win]::keybd_event(0x0D, 0, 0, [IntPtr]::Zero); [IJWA.Win]::keybd_event(0x0D, 0, 2, [IntPtr]::Zero)
     # The results are this search's once the page says so: its line names the words searched.
     $status = Until 10 { $s = ById $win 'SearchPageStatus'; if ($s -and ([string]$s.Current.Name).ToLowerInvariant().Contains($query.ToLowerInvariant())) { $s } }
     if (-not $status) { return @{ ok = $false; error = 'search did not answer' } }
@@ -675,11 +675,11 @@ function Apple($c) {
   } finally {
     # The keys go back to the window the user was in, and Apple Music to where it was — then it shows again.
     if ($state -ne 'front') {
-      if ($foreground -ne [IntPtr]::Zero) { [IBaila.Win]::keybd_event(0x87, 0, 0, [IntPtr]::Zero); [IBaila.Win]::keybd_event(0x87, 0, 2, [IntPtr]::Zero); $null = [IBaila.Win]::SetForegroundWindow($foreground) }
-      if ($state -eq 'minimized' -or $state -eq 'opened') { $null = [IBaila.Win]::ShowWindow($h, 7) }   # SW_SHOWMINNOACTIVE
-      elseif ($above -ne [IntPtr]::Zero) { [IBaila.Win]::PutUnder($h, $above) }
+      if ($foreground -ne [IntPtr]::Zero) { [IJWA.Win]::keybd_event(0x87, 0, 0, [IntPtr]::Zero); [IJWA.Win]::keybd_event(0x87, 0, 2, [IntPtr]::Zero); $null = [IJWA.Win]::SetForegroundWindow($foreground) }
+      if ($state -eq 'minimized' -or $state -eq 'opened') { $null = [IJWA.Win]::ShowWindow($h, 7) }   # SW_SHOWMINNOACTIVE
+      elseif ($above -ne [IntPtr]::Zero) { [IJWA.Win]::PutUnder($h, $above) }
       Start-Sleep -Milliseconds 250
-      [IBailaUnseen]::Stop()
+      [IJWAUnseen]::Stop()
       SeeThrough $h $false
     }
   }
@@ -693,8 +693,8 @@ function AppleSeek($c) {
   $win = AppleWindow
   if (-not $win) { return @{ ok = $false; error = 'Apple Music is not open' } }
   $h = [IntPtr]$win.Current.NativeWindowHandle
-  $minimized = [IBaila.Win]::IsIconic($h)
-  if ($minimized) { SeeThrough $h $true; $null = [IBaila.Win]::ShowWindow($h, 4); Start-Sleep -Milliseconds 350 }   # SW_SHOWNOACTIVATE
+  $minimized = [IJWA.Win]::IsIconic($h)
+  if ($minimized) { SeeThrough $h $true; $null = [IJWA.Win]::ShowWindow($h, 4); Start-Sleep -Milliseconds 350 }   # SW_SHOWNOACTIVATE
   try {
     $scrubber = Until 2 { ById $win 'LCDScrubber' }
     if (-not $scrubber) { return @{ ok = $false; error = 'no scrubber' } }
@@ -702,7 +702,7 @@ function AppleSeek($c) {
     $range.SetValue([math]::Max($range.Current.Minimum, [math]::Min([double]$c.seconds, $range.Current.Maximum)))
     return @{ ok = $true; at = $range.Current.Value }
   } finally {
-    if ($minimized) { $null = [IBaila.Win]::ShowWindow($h, 7); Start-Sleep -Milliseconds 250; SeeThrough $h $false }   # SW_SHOWMINNOACTIVE
+    if ($minimized) { $null = [IJWA.Win]::ShowWindow($h, 7); Start-Sleep -Milliseconds 250; SeeThrough $h $false }   # SW_SHOWMINNOACTIVE
   }
 }
 
@@ -715,8 +715,8 @@ function AppleRepeat($c) {
   $win = AppleWindow
   if (-not $win) { return @{ ok = $false; error = 'Apple Music is not open' } }
   $h = [IntPtr]$win.Current.NativeWindowHandle
-  $minimized = [IBaila.Win]::IsIconic($h)
-  if ($minimized) { SeeThrough $h $true; $null = [IBaila.Win]::ShowWindow($h, 4); Start-Sleep -Milliseconds 350 }   # SW_SHOWNOACTIVATE
+  $minimized = [IJWA.Win]::IsIconic($h)
+  if ($minimized) { SeeThrough $h $true; $null = [IJWA.Win]::ShowWindow($h, 4); Start-Sleep -Milliseconds 350 }   # SW_SHOWNOACTIVATE
   try {
     if (-not (Until 2 { ById $win 'RepeatButton' })) { return @{ ok = $false; error = 'no repeat button' } }
     $name = { [string](ById $win 'RepeatButton').Current.Name }
@@ -733,7 +733,7 @@ function AppleRepeat($c) {
     for ($i = 0; $i -lt 3 -and $script:appleRepeat[(& $name)] -ne $c.mode; $i++) { & $press }
     return @{ ok = $true; mode = $script:appleRepeat[(& $name)] }
   } finally {
-    if ($minimized) { $null = [IBaila.Win]::ShowWindow($h, 7); Start-Sleep -Milliseconds 250; SeeThrough $h $false }   # SW_SHOWMINNOACTIVE
+    if ($minimized) { $null = [IJWA.Win]::ShowWindow($h, 7); Start-Sleep -Milliseconds 250; SeeThrough $h $false }   # SW_SHOWMINNOACTIVE
   }
 }
 
@@ -745,7 +745,7 @@ function Now($c) {
   $Title = [string]$c.title
   $window = SpotifyWindow
   if (-not $window) { return @{ error = 'no window' } }
-  if ([IBaila.Win]::IsIconic($window.MainWindowHandle)) { return @{ error = 'minimized' } }
+  if ([IJWA.Win]::IsIconic($window.MainWindowHandle)) { return @{ error = 'minimized' } }
   $root = $A::FromHandle($window.MainWindowHandle)
   $track = $null; $album = $null; $artists = @(); $seen = @{}
   for ($try = 0; $try -lt 4 -and -not $album; $try++) {

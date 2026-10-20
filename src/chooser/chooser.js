@@ -1,8 +1,8 @@
 // Music playing in two places at once (SourceChooser.swift): each player with its mark, its name and its song. The one
-// picked plays on and iBaila follows it; the others pause. "Keep all playing" leaves them be.
+// picked plays on and iJWA follows it; the others pause. "Keep all playing" leaves them be.
 import { logos } from '../desktop/logos.js';
 
-const api = window.ibaila;
+const api = window.ijwa;
 const escape = (text) => String(text ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const panel = document.getElementById('panel');
 

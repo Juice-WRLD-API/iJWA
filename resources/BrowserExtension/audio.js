@@ -1,6 +1,6 @@
-// The sound of the song playing, for timing its words on this computer (iBaila's lyrics sync): the page's own audio
+// The sound of the song playing, for timing its words on this computer (iJWA's lyrics sync): the page's own audio
 // file, fetched whole as the page fetches its parts, decoded by the browser — every format it plays — and made 16 kHz
-// mono, kept in the page until iBaila has taken it in pieces. Nothing is saved; it's gone once taken. Handed to the
+// mono, kept in the page until iJWA has taken it in pieces. Nothing is saved; it's gone once taken. Handed to the
 // page whole (chrome.scripting): nothing outside the function is seen there.
 //
 // ask: { what: 'prepare' } → { samples, seconds } or { error }
@@ -12,14 +12,14 @@ export async function pageAudio(site, ask) {
 
   async function answer() {
     if (ask.what === 'chunk') {
-      const pcm = window.__ibailaAudio;
+      const pcm = window.__ijwaAudio;
       if (!pcm) return { error: 'nothing prepared' };
       const part = new Uint8Array(pcm.buffer, ask.from * 2, Math.max(0, Math.min(ask.count, pcm.length - ask.from)) * 2);
       let text = '';
       for (let i = 0; i < part.length; i += 0x8000) text += String.fromCharCode.apply(null, part.subarray(i, i + 0x8000));
       return { data: btoa(text) };
     }
-    if (ask.what === 'clear') { window.__ibailaAudio = null; return { done: true }; }
+    if (ask.what === 'clear') { window.__ijwaAudio = null; return { done: true }; }
 
     const fetched = site === 'soundCloud' ? await soundCloud() : await youTube();
     if (fetched.error) return fetched;
@@ -33,7 +33,7 @@ export async function pageAudio(site, ask) {
       for (const channel of channels) sum += channel[i];
       mono[i] = Math.max(-1, Math.min(1, sum / channels.length)) * 32767;
     }
-    window.__ibailaAudio = mono;
+    window.__ijwaAudio = mono;
     return { samples: mono.length, seconds: audio.duration };
   }
 

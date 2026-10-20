@@ -4,7 +4,7 @@
 // while it plays it floats, little bars dance at its end and sparks of the artwork's colors rise off it.
 import { paletteFromPixels, hsbToRgb } from '../light/engine.js';
 
-const api = window.ibaila;
+const api = window.ijwa;
 const $ = (selector) => document.querySelector(selector);
 const escape = (text) => String(text ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const random = (a, b) => a + Math.random() * (b - a);

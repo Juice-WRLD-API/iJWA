@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 const on = (channel) => (callback) => ipcRenderer.on(channel, (_event, value) => callback(value));
-contextBridge.exposeInMainWorld('ibaila', {
+contextBridge.exposeInMainWorld('ijwa', {
   onStyle: on('style'),
   onPlaying: on('playing'),
   onAlbum: on('album'),
@@ -38,10 +38,10 @@ window.addEventListener('error', (event) => {
   const img = event.target;
   if (!img || img.tagName !== 'IMG') return;
   const src = img.getAttribute('src') || '';
-  if (img.dataset.ibailaFor !== src && img.dataset.ibailaTried !== src) {
+  if (img.dataset.ijwaFor !== src && img.dataset.ijwaTried !== src) {
     // A first failure for this picture: one other size of it.
     const other = smaller(src);
-    if (other && other !== src) { img.dataset.ibailaFor = other; img.dataset.ibailaTried = src; img.setAttribute('src', other); return; }
+    if (other && other !== src) { img.dataset.ijwaFor = other; img.dataset.ijwaTried = src; img.setAttribute('src', other); return; }
   }
   img.style.visibility = 'hidden';
 }, true);

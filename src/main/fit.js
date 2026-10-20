@@ -1,4 +1,4 @@
-// How big iBaila's things may be on a display. They are designed for a MacBook's screen (1440 × 900 points);
+// How big iJWA's things may be on a display. They are designed for a MacBook's screen (1440 × 900 points);
 // on a smaller one — a 1366 × 768 laptop, a 125% or 150% scaled one, a small window — everything shrinks with it,
 // so the player, the playlist, the clock and the light's rim keep their share of the screen. Never larger.
 const { screen } = require('electron');

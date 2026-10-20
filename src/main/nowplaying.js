@@ -1,7 +1,7 @@
 // What is playing, everywhere in the app: the song, whether it plays, where in it, shuffle and repeat, and the
 // way to control it. On Windows it comes from the system media session through a small PowerShell helper (no
 // native module to build), which Spotify, Apple Music and browsers all report to. Anywhere else,
-// `IBAILA_FAKE=1` runs a made-up player with real songs, for building the app on the Mac.
+// `IJWA_FAKE=1` runs a made-up player with real songs, for building the app on the Mac.
 const { EventEmitter } = require('events');
 const { nativeImage } = require('electron');
 const artwork = require('./artwork');
@@ -13,8 +13,8 @@ function sourceOf(app) {
   const name = (app || '').toLowerCase();
   if (name.includes('spotify')) return 'spotify';
   if (name.includes('applemusic') || name.includes('itunes')) return 'music';
-  // iBaila's own player: its sound tells Windows too (its media session), and the app as Windows names it.
-  if (name.includes('ibaila')) return 'files';
+  // iJWA's own player: its sound tells Windows too (its media session), and the app as Windows names it.
+  if (name.includes('ijwa')) return 'files';
   // A browser — YouTube Music, SoundCloud — or YouTube Music's own desktop apps. Firefox names itself to Windows by
   // its app ID alone.
   if (/chrome|msedge|edge|firefox|brave|opera|vivaldi|arc|youtube-music|ytmdesktop|308046b0af4a39cb/.test(name)) return 'web';
@@ -30,7 +30,7 @@ const now = () => performance.timeOrigin / 1000 + performance.now() / 1000;
 const CHOICES = ['appleMusic', 'spotify', 'spotifyWeb', 'youTubeMusic', 'soundCloud'];
 const SITES = { youTubeMusic: 'youTubeMusic', soundCloud: 'soundCloud', spotifyWeb: 'spotifyWeb' };
 const NAMES = { appleMusic: 'Apple Music', spotify: 'Spotify', spotifyWeb: 'Spotify Web Player', youTube: 'YouTube', youTubeMusic: 'YouTube Music', soundCloud: 'SoundCloud',
-  browser: 'your browser', files: 'iBaila' };
+  browser: 'your browser', files: 'iJWA' };
 
 /** Whether a picture is an app's icon — Chrome's logo showed on the cover for a moment as a song started on the web
  *  (a friend's PC, 2026-10-09): an icon's corners are see-through, a cover's never are. */
@@ -67,9 +67,9 @@ class NowPlaying extends EventEmitter {
 
   start() {
     if (process.platform === 'win32') this.startWindows();
-    else if (process.env.IBAILA_FAKE) this.startFake();
-    // iBaila's browser extension: each music page tells what it plays itself (extension.js).
-    if (process.platform === 'win32' || process.env.IBAILA_EXTENSION_PORT) {
+    else if (process.env.IJWA_FAKE) this.startFake();
+    // iJWA's browser extension: each music page tells what it plays itself (extension.js).
+    if (process.platform === 'win32' || process.env.IJWA_EXTENSION_PORT) {
       const { extension } = require('./extension');
       extension.on('playing', (page) => this.pageSaid(page));
       // Only a page of the site chosen (any music site, with none chosen) takes the following over.
@@ -78,7 +78,7 @@ class NowPlaying extends EventEmitter {
     }
   }
 
-  /** A browser's music page told what it plays, through iBaila's extension (NowPlaying.pageSaid): followed instead of
+  /** A browser's music page told what it plays, through iJWA's extension (NowPlaying.pageSaid): followed instead of
    *  Windows' word for the browser, which names only one of its tabs — and with Opera, often none. Its picture is
    *  fetched by its address, once. */
   pageSaid(page) {
@@ -97,7 +97,7 @@ class NowPlaying extends EventEmitter {
     const data = { app: page.browser, title: page.title, artist: page.artist, album: page.album, playing: page.playing,
       position: typeof page.position === 'number' ? page.position + age : undefined, duration: page.duration || 0,
       site: page.site, viaExtension: true, link: page.link || '' };
-    // The page's own repeat, as its button says — not while a press of iBaila's is still on its way there.
+    // The page's own repeat, as its button says — not while a press of iJWA's is still on its way there.
     const repeat = { off: 'None', one: 'Track', all: 'List' }[page.repeat];
     if (repeat && !(this.repeatPressedAt && Date.now() - this.repeatPressedAt < 3000)) data.repeat = repeat;
     // Spotify's Web Player names the song's own page — signed in, only its album's: the song's ID found in the album's
@@ -184,7 +184,7 @@ class NowPlaying extends EventEmitter {
   /** The site a chosen place is, for a browser's songs. */
   get chosenSite() { return SITES[this.choice] || null; }
 
-  /** Whether an app's songs are followed, as the user chose; iBaila's own player always is. */
+  /** Whether an app's songs are followed, as the user chose; iJWA's own player always is. */
   allows(source) {
     const choice = this.choice;
     if (!choice || source === 'files') return true;
@@ -217,7 +217,7 @@ class NowPlaying extends EventEmitter {
   /** A new choice: what plays elsewhere goes, the helper follows the app chosen, and the player says so. */
   choiceChanged() {
     // The song playing where the user listened before stops there (his ask, 2026-10-11; Mac NowPlaying.choiceChanged):
-    // before, it went on in the old app while iBaila followed the new one. Pages of the old site: turnMusicTab.
+    // before, it went on in the old app while iJWA followed the new one. Pages of the old site: turnMusicTab.
     const before = this.track;
     if (before && this.playing && this.choice && before.source !== 'web' && (before.source === 'files' || !this.allows(before.source))) {
       if (before.source === 'files') require('./main-state').files?.pause();
@@ -250,7 +250,7 @@ class NowPlaying extends EventEmitter {
     this.changed();
   }
 
-  /** The music tab (one for every site, through iBaila's extension) sent to the home page of the site chosen, if
+  /** The music tab (one for every site, through iJWA's extension) sent to the home page of the site chosen, if
    *  none of its own is open; the other sites' pages fall quiet. */
   async turnMusicTab(site) {
     const { extension } = require('./extension');
@@ -329,10 +329,10 @@ class NowPlaying extends EventEmitter {
     const artist = data.artist || data.albumArtist || '';
     (async () => {
       const webmusic = require('./webmusic');
-      // YouTube Music alone names an album; a page iBaila itself opened a moment ago is of the site it opened; off
+      // YouTube Music alone names an album; a page iJWA itself opened a moment ago is of the site it opened; off
       // Windows (building on the Mac) every page is the one chosen; else the browser's tabs say.
       const opened = this.web.opened && Date.now() - this.web.opened.at < 45000 ? this.web.opened.site : null;
-      // A page heard through iBaila's extension names its site itself.
+      // A page heard through iJWA's extension names its site itself.
       let found = { site: data.site || (data.album ? 'youTubeMusic' : opened || (process.platform !== 'win32' ? only || 'youTubeMusic' : null)) };
       if (!found.site && process.platform === 'win32') found = await require('./browser').musicSite(data.title, only, artist);
       let site = found.site;
@@ -368,7 +368,7 @@ class NowPlaying extends EventEmitter {
    *  to show it on its way (StartingPanel.swift). `any`: an album or an artist, ended by whichever song comes first. */
   ask(info) {
     const asked = { ...info, id: `${Date.now()}:${Math.random().toString(36).slice(2)}` };
-    // Something to play elsewhere: iBaila's own song falls quiet first.
+    // Something to play elsewhere: iJWA's own song falls quiet first.
     if (!info.files) require('./main-state').files?.pause();
     this.emit('asked', asked);
     return asked.id;
@@ -390,7 +390,7 @@ class NowPlaying extends EventEmitter {
     this.send(on ? `watch-desk on ${process.pid}` : 'watch-desk off');
   }
 
-  /** iBaila's desktop windows, top one first (their window handles), for the helper to keep just above the desktop. */
+  /** iJWA's desktop windows, top one first (their window handles), for the helper to keep just above the desktop. */
   keepAtDesktop(windows) {
     const handles = windows.filter((w) => w && !w.isDestroyed() && w.isVisible())
       .map((w) => { const b = w.getNativeWindowHandle(); return String(b.length >= 8 ? b.readBigUInt64LE(0) : b.readUInt32LE(0)); }).join(' ');
@@ -402,7 +402,7 @@ class NowPlaying extends EventEmitter {
   /** Whether picks play in Windows' Apple Music app: it was chosen, or, nothing chosen, it is what plays. */
   get inAppleMusic() { return this.choice === 'appleMusic' || (!this.choice && this.track?.source === 'music'); }
 
-  /** iBaila's own player, when it is what plays. */
+  /** iJWA's own player, when it is what plays. */
   get filePlayer() { const files = require('./main-state').files; return this.track?.source === 'files' && files?.isActive ? files : null; }
   togglePlayback() {
     if (this.filePlayer) this.filePlayer.togglePlayback();
@@ -500,7 +500,7 @@ class NowPlaying extends EventEmitter {
       if (this.stopped) return;
       helpers.send('smtc', 'start');
       this.preferChosen();
-      // The helper keeps iBaila's desktop windows just above the desktop: told them again, now that it is new.
+      // The helper keeps iJWA's desktop windows just above the desktop: told them again, now that it is new.
       this.deskWindows = '';
       if (this.watchingDesk) this.send(`watch-desk on ${process.pid}`);
     };
@@ -516,10 +516,10 @@ class NowPlaying extends EventEmitter {
     // A display filled by an app in front (a game, a video in full screen): the light steps aside there.
     // The window in front, while the desk is cleared (cleardesk.js).
     if ('front' in data) { this.emit('front', data.front); return; }
-    // The desktop (or iBaila) in front or not, for the light shown only on the desktop.
+    // The desktop (or iJWA) in front or not, for the light shown only on the desktop.
     if ('desktopFront' in data) { this.emit('desktop-front', Boolean(data.desktopFront)); return; }
     if ('fullscreen' in data) { this.emit('fullscreen', Array.isArray(data.fullscreen) ? data.fullscreen : [data.fullscreen].filter(Boolean)); return; }
-    // A browser with iBaila's extension: its pages say what they play themselves (pageSaid); Windows' word for it,
+    // A browser with iJWA's extension: its pages say what they play themselves (pageSaid); Windows' word for it,
     // one tab's at most, is let be.
     if (sourceOf(data.app) === 'web' && require('./extension').extension.reaches(data.app)) return;
     // Nor does an empty word of Windows' pause a page's song: between songs a browser names nothing for a moment.
@@ -530,18 +530,18 @@ class NowPlaying extends EventEmitter {
   /** One reading of the player: what it plays, whether, where, and its picture when it sends one. */
   update(data, picture) {
     const at = now();
-    if (global.ibailaTrace) global.ibailaTrace(data, this);
+    if (global.ijwaTrace) global.ijwaTrace(data, this);
     if (data.none || !data.title) {
       if (this.playing) { this.playing = false; if (this.clock) this.clock = { seconds: this.clockSeconds(at), at, running: false }; this.emit('playing', false); this.changed(); }
       return;
     }
     const source = sourceOf(data.app);
-    // iBaila's own songs are told by its player directly (fileplayer.js), not by Windows' word for them.
+    // iJWA's own songs are told by its player directly (fileplayer.js), not by Windows' word for them.
     if (source === 'files' && !data.fromFiles) return;
     const files = require('./main-state').files;
     if (source !== 'files' && this.track?.source === 'files' && files?.playing) {
-      // Another app's word while iBaila's own song plays: a paused one is let be; one starting to play takes over, and
-      // iBaila's own song falls quiet — one place plays.
+      // Another app's word while iJWA's own song plays: a paused one is let be; one starting to play takes over, and
+      // iJWA's own song falls quiet — one place plays.
       if (!data.playing) return;
       files.pause();
     }
@@ -565,7 +565,7 @@ class NowPlaying extends EventEmitter {
     }
     let title = data.title, artist = data.artist || data.albumArtist || '';
     if (source === 'web') {
-      // The browser's last word, followed or not: its tab is the one a page picked in iBaila goes to.
+      // The browser's last word, followed or not: its tab is the one a page picked in iJWA goes to.
       this.lastBrowserTitle = data.title;
       // Which site's page plays, by the browser's tabs: a page that isn't music's — a YouTube video, unless YouTube
       // was chosen — isn't followed. Unknown yet, the song waits for the answer.
@@ -599,7 +599,7 @@ class NowPlaying extends EventEmitter {
       this.artworkFile = known;
       this.artworkSongID = known ? next.id : null;
       this.history.record(next, known, playing);
-      // A song iBaila just started in Spotify by its ID: the ID is known without reading Spotify's window.
+      // A song iJWA just started in Spotify by its ID: the ID is known without reading Spotify's window.
       const asked = this.expected;
       if (asked && now() - asked.at < 30 && plain(next.title) === asked.title) {
         this.expected = null;
@@ -622,7 +622,7 @@ class NowPlaying extends EventEmitter {
       const { viaExtension, ...rest } = this.track;
       this.track = data.viaExtension ? { ...rest, viaExtension: true } : rest;
     }
-    if (picture && global.ibailaKeepPicture) global.ibailaKeepPicture(next, picture);
+    if (picture && global.ijwaKeepPicture) global.ijwaKeepPicture(next, picture);
     // A browser hands Windows its own icon as the picture until the page gives the song's: never taken as a cover.
     if (picture && isIcon(picture)) picture = null;
     // A YouTube video's picture is a frame of it: its song's square cover, found on YouTube Music, stays.
@@ -662,7 +662,7 @@ class NowPlaying extends EventEmitter {
     if (dirty) this.changed();
   }
 
-  /** iBaila is starting a song in Spotify by its ID: when it plays, its ID is known at once. */
+  /** iJWA is starting a song in Spotify by its ID: when it plays, its ID is known at once. */
   expect(uri, title) { this.expected = { uri, title: plain(title), at: now() }; }
 
   /** A song started through Spotify's search turned out to have this ID: the song playing takes it, if it is that one,
@@ -759,8 +759,8 @@ class NowPlaying extends EventEmitter {
       { title: 'Run Away', artist: 'Khaid & Gyakie', album: 'Run Away - Single', duration: 176 },
       { title: 'Empty', artist: 'Juice WRLD', album: 'Death Race for Love', duration: 247 },
     ];
-    // IBAILA_FAKE_SONG picks the song to start with, IBAILA_FAKE_AT where in it.
-    let index = Number(process.env.IBAILA_FAKE_SONG || 0), position = Number(process.env.IBAILA_FAKE_AT || 0), playing = true, last = now();
+    // IJWA_FAKE_SONG picks the song to start with, IJWA_FAKE_AT where in it.
+    let index = Number(process.env.IJWA_FAKE_SONG || 0), position = Number(process.env.IJWA_FAKE_AT || 0), playing = true, last = now();
     const pictures = {};
     const fetchPicture = async (song) => {
       if (pictures[song.album]) return pictures[song.album];

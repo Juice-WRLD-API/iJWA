@@ -6,7 +6,7 @@ import { RIM_VERTEX, lookFragment } from '../light/shader.js';
 import { LOOKS, placeNumber, tickerHeight } from '../light/looks.js';
 import { hsbToRgb, paletteFromPixels } from '../light/engine.js';
 
-const api = window.ibaila;
+const api = window.ijwa;
 const SCREEN = [1920, 1080];
 const W = 440, H = 248; // each tile's pixels: 220 × 124 points, two pixels a point
 

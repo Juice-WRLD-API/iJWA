@@ -15,7 +15,7 @@ import { Lists } from './lists.js';
 import { DEFAULT_STYLE, paletteFromPixels, hsbToRgb } from '../light/engine.js';
 import { PlayingGlass } from '../shared/playing-glass.js';
 
-const api = window.ibaila;
+const api = window.ijwa;
 const $ = (selector) => document.querySelector(selector);
 
 // ---- measurements ----
@@ -169,7 +169,7 @@ api.listen('desk-starting', showStarting);
 api.invoke('desk-starting').then((s) => { if (s) showStarting(s); });
 
 // ---- the extension asked for (ExtensionCard.swift) ----
-// Music in a browser and iBaila's extension not there yet: the middle asks for it, the cards gone from round it. No
+// Music in a browser and iJWA's extension not there yet: the middle asks for it, the cards gone from round it. No
 // "not now": without it a browser's music can only be watched (his call, 2026-10-10). Pressed, it waits for the
 // browser; when the extension comes, it says so a moment and goes.
 
@@ -188,10 +188,10 @@ function drawExtension(shown) {
   box.classList.toggle('adding', Boolean(adding) && !arrived);
   box.classList.toggle('arrived', Boolean(arrived));
   box.querySelector('.ext-icon').innerHTML = arrived ? icons.tick : icons.puzzle;
-  box.querySelector('.ext-title').textContent = arrived ? 'You\u2019re all set' : 'Add iBaila to your browser';
-  box.querySelector('.ext-words').textContent = arrived ? `iBaila is in ${where} now. Pick a song and it plays right there.`
+  box.querySelector('.ext-title').textContent = arrived ? 'You\u2019re all set' : 'Add iJWA to your browser';
+  box.querySelector('.ext-words').textContent = arrived ? `iJWA is in ${where} now. Pick a song and it plays right there.`
     : adding ? `Paste ${page} in ${where}\u2019s address bar (it\u2019s copied), turn on Developer mode, then drag the \u201cBrowser Extension\u201d folder onto that page.`
-      : `${site || 'Your music'} plays in your browser, so iBaila needs to be there too: to play what you pick, open your playlists, like and repeat. It takes a minute.`;
+      : `${site || 'Your music'} plays in your browser, so iJWA needs to be there too: to play what you pick, open your playlists, like and repeat. It takes a minute.`;
   box.querySelector('.ext-add').textContent = browser ? `Add to ${browser}` : 'Add to your browser';
   box.querySelector('.ext-wait-text').textContent = `Waiting for ${where}`;
 }
