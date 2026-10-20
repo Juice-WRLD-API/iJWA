@@ -1,4 +1,4 @@
-// The places one listens in, as their marks (SourceMark.swift): Apple Music, Spotify, YouTube, YouTube Music,
+// The places one listens in, as their marks (SourceMark.swift): Apple Music, Spotify, Unreleased, YouTube, YouTube Music,
 // SoundCloud, a browser and iJWA's own player — drawn here, on a 100-unit square, the mark filling about four
 // fifths of it as an app icon's shape does, so they stand side by side at one size.
 const mark = (body, defs = '') =>
@@ -25,6 +25,7 @@ export const logos = {
     <path d="M22 38c19-6 40-4 57 6" fill="none" stroke="#121212" stroke-width="8.5" stroke-linecap="round"/>
     <path d="M26 53c15-4.5 32-3 46 4.5" fill="none" stroke="#121212" stroke-width="7" stroke-linecap="round"/>
     <path d="M30 67c12-3.5 25-2.4 36 3.4" fill="none" stroke="#121212" stroke-width="5.5" stroke-linecap="round"/>`),
+  unreleased: mark('<image href="ijwa://app/desktop/unreleased.png" width="100" height="100"/>'),
   youTube: mark(`<rect y="15" width="100" height="70" rx="20" fill="#ff0000"/><path d="M40 35v30l26-15z" fill="#fff"/>`),
   youTubeMusic: mark(`<circle cx="50" cy="50" r="50" fill="#ff0033"/><circle cx="50" cy="50" r="29" fill="none" stroke="#fff" stroke-width="5"/>
     <path d="M41 36v28l24-14z" fill="#fff"/>`),
@@ -48,6 +49,7 @@ logos.spotifyWeb = logos.spotify;
 export const CHOICES = [
   { id: 'appleMusic', name: 'Apple Music' },
   { id: 'spotify', name: 'Spotify' },
+  { id: 'unreleased', name: 'Unreleased' },
   { id: 'spotifyWeb', name: 'Spotify Web Player' },
   { id: 'youTubeMusic', name: 'YouTube Music' },
   { id: 'soundCloud', name: 'SoundCloud' },

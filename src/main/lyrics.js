@@ -93,9 +93,10 @@ function timedLines(raw) {
   return times.map((time) => ({ time, text }));
 }
 
-function lyricsFrom(record) {
+function lyricsFrom(record, offset = 0) {
   if (record.syncedLyrics) {
     const lines = record.syncedLyrics.split(/\r?\n|\r/).flatMap(timedLines).sort((a, b) => a.time - b.time);
+    for (const line of lines) line.time += offset;
     lines.forEach((line, i) => {
       const next = lines[i + 1] ? lines[i + 1].time : null;
       Object.assign(line, separate(spread(line.text, line.time, next)));
@@ -185,6 +186,13 @@ async function lookup(track) {
 async function findLyrics(track) {
   const genius = require('./genius');
   if (genius.picks.url(track)) return genius.find(track);
+  if (track.source === 'unreleased') {
+    const shared = await require('./unreleasedlyrics').readLyrics(track);
+    if (shared) {
+      const lyrics = lyricsFrom(shared, shared.offset);
+      if (lyrics) return { status: 'found', lyrics };
+    }
+  }
   const found = await findTimed(track);
   return found.status === 'none' ? genius.find(track) : found;
 }

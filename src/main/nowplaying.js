@@ -1,6 +1,6 @@
 // What is playing, everywhere in the app: the song, whether it plays, where in it, shuffle and repeat, and the
 // way to control it. On Windows it comes from the system media session through a small PowerShell helper (no
-// native module to build), which Spotify, Apple Music and browsers all report to. Anywhere else,
+// native module to build), which Spotify, Apple Music, Unreleased and browsers all report to. Anywhere else,
 // `IJWA_FAKE=1` runs a made-up player with real songs, for building the app on the Mac.
 const { EventEmitter } = require('events');
 const { nativeImage } = require('electron');
@@ -13,6 +13,7 @@ function sourceOf(app) {
   const name = (app || '').toLowerCase();
   if (name.includes('spotify')) return 'spotify';
   if (name.includes('applemusic') || name.includes('itunes')) return 'music';
+  if (/unreleased|com\.juicewrldapi\.player/.test(name)) return 'unreleased';
   // iJWA's own player: its sound tells Windows too (its media session), and the app as Windows names it.
   if (name.includes('ijwa')) return 'files';
   // A browser — YouTube Music, SoundCloud — or YouTube Music's own desktop apps. Firefox names itself to Windows by
@@ -27,9 +28,9 @@ const now = () => performance.timeOrigin / 1000 + performance.now() / 1000;
 // Plain YouTube was a choice too, until videos moved the light (his call, 2026-10-09: music only, YouTube Music): a
 // choice of it kept from before reads as none.
 // Spotify's Web Player is a place of its own, apart from Spotify's app (his call on the Mac, 2026-10-10).
-const CHOICES = ['appleMusic', 'spotify', 'spotifyWeb', 'youTubeMusic', 'soundCloud'];
+const CHOICES = ['appleMusic', 'spotify', 'unreleased', 'spotifyWeb', 'youTubeMusic', 'soundCloud'];
 const SITES = { youTubeMusic: 'youTubeMusic', soundCloud: 'soundCloud', spotifyWeb: 'spotifyWeb' };
-const NAMES = { appleMusic: 'Apple Music', spotify: 'Spotify', spotifyWeb: 'Spotify Web Player', youTube: 'YouTube', youTubeMusic: 'YouTube Music', soundCloud: 'SoundCloud',
+const NAMES = { appleMusic: 'Apple Music', spotify: 'Spotify', unreleased: 'Unreleased', spotifyWeb: 'Spotify Web Player', youTube: 'YouTube', youTubeMusic: 'YouTube Music', soundCloud: 'SoundCloud',
   browser: 'your browser', files: 'iJWA' };
 
 /** Whether a picture is an app's icon — Chrome's logo showed on the cover for a moment as a song started on the web
@@ -190,6 +191,7 @@ class NowPlaying extends EventEmitter {
     if (!choice || source === 'files') return true;
     if (source === 'music') return choice === 'appleMusic';
     if (source === 'spotify') return choice === 'spotify';
+    if (source === 'unreleased') return choice === 'unreleased';
     // A browser's page, when a site is chosen: Spotify's app chosen is its app alone, its Web Player a place apart.
     if (source === 'web') return Boolean(SITES[choice]);
     return false;
@@ -200,7 +202,7 @@ class NowPlaying extends EventEmitter {
   mark() {
     const source = this.track?.source;
     if (source === 'files') return { kind: 'files', name: NAMES.files };
-    const kind = this.choice || (source === 'spotify' ? 'spotify' : source === 'music' ? 'appleMusic'
+    const kind = this.choice || (source === 'spotify' ? 'spotify' : source === 'music' ? 'appleMusic' : source === 'unreleased' ? 'unreleased'
       : source === 'web' ? this.webSite || 'browser' : null);
     return kind ? { kind, name: NAMES[kind] } : null;
   }
@@ -279,7 +281,7 @@ class NowPlaying extends EventEmitter {
   /** Windows names one session "current" — whichever app last made a sound. With a place chosen, its own app's session
    *  is followed instead, whatever else plays. */
   preferChosen() {
-    const pattern = { spotify: 'Spotify', appleMusic: 'AppleMusic|iTunes' }[this.choice]
+    const pattern = { spotify: 'Spotify', appleMusic: 'AppleMusic|iTunes', unreleased: 'Unreleased|com\\.juicewrldapi\\.player' }[this.choice]
       || (SITES[this.choice] ? 'chrome|msedge|firefox|brave|opera|vivaldi|arc' : '');
     this.send(`prefer ${pattern}`);
   }

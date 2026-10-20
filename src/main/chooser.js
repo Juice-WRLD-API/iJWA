@@ -8,6 +8,7 @@ function describe(app) {
   const id = String(app || '');
   if (/spotify/i.test(id)) return { name: 'Spotify', kind: 'spotify' };
   if (/applemusic|itunes/i.test(id)) return { name: 'Apple Music', kind: 'appleMusic' };
+  if (/unreleased|com\.juicewrldapi\.player/i.test(id)) return { name: 'Unreleased', kind: 'unreleased' };
   if (/msedge/i.test(id)) return { name: 'Microsoft Edge', kind: 'browser' };
   if (/chrome/i.test(id)) return { name: 'Google Chrome', kind: 'browser' };
   if (/firefox|308046B0AF4A39CB/i.test(id)) return { name: 'Firefox', kind: 'browser' };

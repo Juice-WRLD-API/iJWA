@@ -15,7 +15,7 @@ const steps = [
   { sign: 'tray', title: 'iJWA lives by your clock',
     text: 'Click its icon at the bottom right of your screen for everything: the light, the player, the lyrics, the wallpaper.' },
   { sign: 'note', title: 'Play something',
-    text: 'iJWA follows Spotify, Apple Music, YouTube Music and SoundCloud. The icon at the left of the player chooses where you listen.' },
+    text: 'iJWA follows Spotify, Apple Music, Unreleased, YouTube Music and SoundCloud. The icon at the left of the player chooses where you listen.' },
   { sign: 'hand', title: 'Make it yours',
     text: 'Drag the player and the playlist anywhere, and put a video of your own on the desktop in Wallpaper.' },
 ];

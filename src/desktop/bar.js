@@ -43,7 +43,7 @@ export class Bar {
       <div id="source-menu" class="hidden"><div class="menu-glass"></div>${CHOICES.map((c, i) => `<button class="source-row" data-choice="${c.id}" data-delay="${(CHOICES.length - i) * 35}ms">
         <span class="row-logo">${logos[c.id]}</span><span class="name">${c.name}</span><span class="tick">${icons.tick}</span></button>`).join('')}
         <div class="source-divider"></div>
-        <button class="source-row" data-choice="" title="Whatever plays: Apple Music, Spotify, YouTube Music, SoundCloud"><span class="row-logo sparkles">${logos.automatic}</span>
+        <button class="source-row" data-choice="" title="Whatever plays: Apple Music, Spotify, Unreleased, YouTube Music, SoundCloud"><span class="row-logo sparkles">${logos.automatic}</span>
         <span class="name">Automatic</span><span class="tick">${icons.tick}</span></button></div>`;
     this.glyph = (action) => host.querySelector(`[data-action="${action}"] .glyph`);
     this.glyph('previous').innerHTML = icons.backward;
@@ -167,7 +167,7 @@ export class Bar {
     clear.classList.toggle('active', Boolean(state.isClear));
     clear.title = state.isClear ? 'Bring everything back' : 'Clear the desk';
     const title = t?.title || 'Not Playing';
-    const subtitle = !t?.artist ? (t ? '' : 'Play something in Spotify or Apple Music') : t.album ? `${t.artist} — ${t.album}` : t.artist;
+    const subtitle = !t?.artist ? (t ? '' : 'Play something in Spotify, Apple Music or Unreleased') : t.album ? `${t.artist} — ${t.album}` : t.artist;
     if (title !== before.track?.title || subtitle !== this.subtitleText) {
       this.subtitleText = subtitle;
       this.title.firstChild.textContent = title;
