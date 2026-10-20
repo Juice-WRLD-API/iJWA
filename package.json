@@ -6,6 +6,10 @@
   "main": "src/main/main.js",
   "private": true,
   "author": "YoMilly",
+  "scripts": {
+    "start": "npx --yes electron@44.7.0 .",
+    "pack": "node tools/pack.js"
+  },
   "dependencies": {
     "electron-updater": "^6.8.9"
   }
